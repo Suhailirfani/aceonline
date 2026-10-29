@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+
+{% block title %}Teacher Console | Ace Online{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="font-size: 1.8rem; font-weight: 800; color: #fff;">Teacher Dashboard</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Manage your live tuition sessions, Google Meet links, attendance, and exam marks</p>
+  </div>
+  <div style="display: flex; gap: 0.75rem;">
+    <button class="btn btn-primary" onclick="openModal('scheduleClassModal')">
+      ➕ Schedule Live Class
+    </button>
+    <a href="{% url 'exams:exam_list' %}" class="btn btn-outline">
+      📝 Create Exam
+    </a>
+  </div>
+</div>
+
+<!-- Stats Grid -->
+<div class="stats-grid">
+  <div class="stat-card stat-info">
+    <div class="stat-label">Assigned Subjects</div>
+    <div class="stat-value">{{ my_subjects.count }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Enrolled Students</div>
+    <div class="stat-value">{{ total_students }}</div>
+  </div>
+  <div class="stat-card stat-success">
+    <div class="stat-label">Classes Currently Live</div>
+    <div class="stat-value">{{ live_classes_now.count }}</div>
+  </div>
+  <div class="stat-card stat-warning">
+    <div class="stat-label">Exams Administered</div>
+    <div class="stat-value">{{ my_exams.count }}</div>
+  </div>
+</div>
+
+<!-- Live Class Controller Section -->
+<div class="card" style="margin-bottom: 2rem;">
+  <div class="card-header">
+    <div class="card-title">
+      <span>🎥</span>
+      <span>Live Classroom Management Console</span>
+    </div>
+    <span style="font-size: 0.85rem; color: var(--text-muted);">Real-time session time tracking</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Topic / Title</th>
+          <th>Standard &amp; Subject</th>
+          <th>Schedule</th>
+          <th>Status</th>
+          <th>Google Meet Link</th>
+          <th>Attendees</th>
+          <th>Live Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lc in upcoming_classes %}
+        <tr id="class-row-{{ lc.id }}">
+          <td style="font-weight: 700;">
+            <a href="{% url 'classrooms:class_detail' lc.id %}" style="color: #fff; text-decoration: none;">
+              {{ lc.title }}
+            </a>
+          </td>
+          <td><strong style="color: #38bdf8;">{{ lc.subject.standard.name }}</strong> &bull; {{ lc.subject.name }}</td>
+          <td>
+            <div style="font-size: 0.85rem;">{{ lc.scheduled_start|date:"M d, g:i A" }}</div>
+            {% if lc.actual_start_time %}
+              <div style="font-size: 0.75rem; color: #34d399;">Started: <span id="time-started-{{ lc.id }}">{{ lc.actual_start_time|date:"g:i A" }}</span></div>
+            {% else %}
+              <div style="font-size: 0.75rem; color: var(--text-subtle);">Not started yet</div>
+            {% endif %}
+          </td>
+          <td>
+            {% if lc.status == 'LIVE' %}
+              <span id="status-badge-{{ lc.id }}" class="signal-red-live">
+                <span class="bullet-red-blink"></span>
+                <span>Live Now</span>
+                <span class="live-timer-badge" data-start="{{ lc.actual_start_time.isoformat }}">{{ lc.duration_minutes }}m</span>
+              </span>
+            {% elif lc.status == 'COMPLETED' %}
+              <span id="status-badge-{{ lc.id }}" class="badge-completed">Completed</span>
+            {% else %}
+              <span id="status-badge-{{ lc.id }}" class="badge-scheduled">
+                <span class="bullet-yellow-blink"></span>
+                <span>Scheduled</span>
+              </span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ lc.meet_link }}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.8rem;">
+              Open Meet ↗
+            </a>
+          </td>
+          <td>
+            <a href="{% url 'classrooms:class_detail' lc.id %}" class="btn btn-outline btn-sm">
+              👥 {{ lc.attendee_count }} Students
+            </a>
+          </td>
+          <td>
+            {% if lc.status == 'SCHEDULED' %}
+              <button class="btn btn-success btn-sm" onclick="startLiveClass({{ lc.id }}, this)">
+                ▶️ Start Class
+              </button>
+            {% elif lc.status == 'LIVE' %}
+              <button class="btn btn-danger btn-sm" onclick="endLiveClass({{ lc.id }}, this)">
+                🛑 End Class
+              </button>
+            {% else %}
+              <span class="badge-completed">Concluded</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+            No upcoming or live classes. Click <strong>"Schedule Live Class"</strong> to begin!
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Two columns: My Batches & Recent Exams -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+  
+  <!-- My Subjects -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">📚 My Teaching Subjects &amp; Classes</div>
+      <a href="{% url 'academics:subject_list' %}" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Subject Name</th>
+            <th>Standard / Class</th>
+            <th>Code</th>
+            <th>Enrolled</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in my_subjects %}
+          <tr>
+            <td style="font-weight: 600; color: #fff;">{{ s.name }}</td>
+            <td><span class="role-badge role-TEACHER">{{ s.standard.name }}</span></td>
+            <td><code>{{ s.code }}</code></td>
+            <td><span class="pulse-badge" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8;">{{ s.enrolled_count }} Students</span></td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" style="text-align: center; color: var(--text-muted);">No curriculum subjects assigned to you yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Exams & Marks Entry Quick Access -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">📝 My Exams &amp; Assessments</div>
+      <a href="{% url 'exams:exam_list' %}" class="btn btn-outline btn-sm">All Exams</a>
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Exam Title</th>
+            <th>Standard &amp; Subject</th>
+            <th>Total Marks</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ex in my_exams %}
+          <tr>
+            <td style="font-weight: 600;">{{ ex.title }}</td>
+            <td><small><strong style="color: #38bdf8;">{{ ex.subject.standard.name }}</strong> &bull; {{ ex.subject.name }}</small></td>
+            <td>{{ ex.total_marks }}</td>
+            <td>
+              <a href="{% url 'exams:marks_entry' ex.id %}" class="btn btn-primary btn-sm">
+                ✏️ Enter Marks
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" style="text-align: center; color: var(--text-muted);">No exams created for your subjects yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Schedule Live Class -->
+<div id="scheduleClassModal" class="modal-overlay">
+  <div class="modal-content">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h2 style="font-size: 1.3rem; font-weight: 800; color: #fff;">Schedule New Live Class</h2>
+      <button onclick="closeModal('scheduleClassModal')" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+    </div>
+
+    <form method="post" action="{% url 'classrooms:class_list' %}">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Teaching Subject &amp; Class *</label>
+        <select name="subject" class="form-select" required>
+          <option value="">-- Choose Subject &amp; Standard --</option>
+          {% for s in my_subjects %}
+            <option value="{{ s.id }}">{{ s.standard.name }} - {{ s.name }} ({{ s.code }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+
+      <div class="form-group">
+        <label class="form-label">Google Meet Link *</label>
+        <input type="url" name="meet_link" class="form-input" placeholder="https://meet.google.com/abc-defg-hij" required>
+        <small style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.25rem; display: block;">
+          Paste your Google Meet meeting URL here. Students will be automatically directed here when they join.
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Scheduled Date &amp; Time (12-Hour AM/PM) *</label>
+        <input type="datetime-local" name="scheduled_start" class="form-input" required>
+        <small style="color: var(--text-muted); font-size: 0.78rem; display: block; margin-top: 0.25rem;">
+          Pick date &amp; set class time (supports 12-hour AM/PM format)
+        </small>
+      </div>
+
+      <!-- Weekly Recurring Option -->
+      <div class="form-group" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.85rem;">
+        <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; color: #fff; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.4rem;">
+          <input type="checkbox" name="is_recurring" value="1" class="form-checkbox" id="teacherRecurringCheck" onchange="document.getElementById('teacherRepeatWeeks').style.display = this.checked ? 'flex' : 'none';">
+          <span>🔄 Repeat Weekly (e.g. Every Monday at this time)</span>
+        </label>
+        <div id="teacherRepeatWeeks" style="display: none; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+          <label style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">Repeat for:</label>
+          <input type="number" name="repeat_weeks" class="form-input" value="4" min="1" max="24" style="width: 80px;">
+          <span style="font-size: 0.82rem; color: var(--text-muted);">weeks</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Class Notes / Instructions</label>
+        <textarea name="description" class="form-input" rows="2" placeholder="Preparation instructions, textbook pages..."></textarea>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <button type="button" class="btn btn-outline" onclick="closeModal('scheduleClassModal')">Cancel</button>
+        <button type="submit" class="btn btn-success">Schedule Class</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

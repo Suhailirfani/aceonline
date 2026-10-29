@@ -1,0 +1,594 @@
+{% extends 'base.html' %}
+
+{% block title %}Subjects Directory | Ace Online{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+      <span style="font-size: 1.5rem;">📚</span>
+      <h1 style="font-size: 1.8rem; font-weight: 800; color: #fff; margin: 0;">Curriculum Subjects</h1>
+    </div>
+    <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">
+      Academic curriculum catalog grouped by class (1st Standard to PG). Click any class header to open its subjects.
+    </p>
+  </div>
+  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+    <a href="{% url 'academics:standard_list' %}" class="btn btn-outline btn-sm">
+      🎓 Standards / Classes
+    </a>
+    <a href="{% url 'academics:on_demand_list' %}" class="btn btn-outline btn-sm" style="border-color: #38bdf8; color: #38bdf8;">
+      📥 On-Demand Requests
+    </a>
+    {% if user.is_teacher or user.is_admin_user %}
+    <button class="btn btn-primary btn-sm" onclick="openSubjectModalForStandard('')">
+      ➕ Register New Subject
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Interactive Search, Filter & Accordion Controls Bar -->
+<div class="card" style="padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
+  <form method="get" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <!-- Left Filters: Search & Dropdown -->
+    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; flex: 1; min-width: 280px;">
+      <!-- Search Input -->
+      <div style="position: relative; min-width: 220px; flex: 1; max-width: 320px;">
+        <input 
+          type="search" 
+          name="q" 
+          value="{{ search_query }}" 
+          placeholder="🔍 Search subject name, code, mentor..."
+          class="form-input" 
+          style="width: 100%; margin: 0; padding: 0.45rem 0.85rem; font-size: 0.88rem;"
+        >
+      </div>
+
+      <!-- Class Select -->
+      <div style="min-width: 190px;">
+        <select name="standard" class="form-select" onchange="this.form.submit()" style="margin: 0; padding: 0.45rem 0.85rem; font-size: 0.88rem; width: 100%;">
+          <option value="">All Standards ({{ all_standards.count }} classes)</option>
+          {% for std in all_standards %}
+            <option value="{{ std.id }}" {% if selected_standard == std.id %}selected{% endif %}>
+              {{ std.name }} ({{ std.subjects.count }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-sm" style="padding: 0.45rem 0.9rem;">
+        Filter
+      </button>
+
+      {% if selected_standard or search_query %}
+        <a href="{% url 'academics:subject_list' %}" class="btn btn-outline btn-sm" style="font-size: 0.78rem; padding: 0.45rem 0.75rem;">
+          ✕ Clear
+        </a>
+      {% endif %}
+    </div>
+
+    <!-- Right Controls: Expand All / Collapse All Buttons -->
+    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+      <button type="button" class="btn btn-outline btn-sm" onclick="expandAllStandards()" style="font-size: 0.78rem; padding: 0.35rem 0.7rem; border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;">
+        📂 Expand All
+      </button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="collapseAllStandards()" style="font-size: 0.78rem; padding: 0.35rem 0.7rem;">
+        📁 Collapse All
+      </button>
+      <span style="font-size: 0.82rem; color: var(--text-muted); margin-left: 0.5rem; white-space: nowrap;">
+        Total: <strong style="color: #fff;">{{ total_subjects_count }}</strong> subjects
+      </span>
+    </div>
+  </form>
+</div>
+
+<!-- ============================================================== -->
+<!-- COLLAPSIBLE STANDARDS LIST (HEADS COLLAPSED BY DEFAULT)       -->
+<!-- ============================================================== -->
+<div style="display: flex; flex-direction: column; gap: 0.85rem;">
+
+  {% for std in standards %}
+  <div class="std-accordion-card" id="std-card-{{ std.id }}">
+    
+    <!-- Collapsible Class Header -->
+    <div 
+      class="std-accordion-header" 
+      id="std-header-{{ std.id }}"
+      onclick="toggleStandard({{ std.id }})"
+      title="Click to toggle subjects for {{ std.name }}"
+    >
+      <div style="display: flex; align-items: center; gap: 0.85rem; flex: 1;">
+        <!-- Standard Order / Icon Avatar -->
+        <div class="std-icon-box">
+          🎓
+        </div>
+
+        <div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <h2 style="font-size: 1.12rem; font-weight: 800; color: #fff; margin: 0; letter-spacing: -0.2px;">
+              {{ std.name }}
+            </h2>
+            <span class="badge-scheduled" style="font-size: 0.7rem; padding: 0.15rem 0.45rem;">
+              {{ std.code }}
+            </span>
+            <span style="font-size: 0.72rem; color: #94a3b8; background: rgba(148, 163, 184, 0.12); padding: 0.15rem 0.5rem; border-radius: 9999px;">
+              {{ std.get_category_display }}
+            </span>
+          </div>
+          {% if std.description %}
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem; max-width: 600px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              {{ std.description }}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Right Side: Subject Count Badge & Caret Arrow -->
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        {% with sub_count=std.subjects.all|length %}
+          {% if sub_count > 0 %}
+            <span class="std-count-pill has-subjects">
+              {{ sub_count }} Subject{{ sub_count|pluralize }}
+            </span>
+          {% else %}
+            <span class="std-count-pill empty-subjects">
+              0 Subjects
+            </span>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Rotating Arrow Indicator -->
+        <div class="std-arrow-circle">
+          <span class="std-accordion-arrow" id="std-arrow-{{ std.id }}">▼</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Collapsible Subjects Content (COLLAPSED BY DEFAULT) -->
+    <div 
+      class="std-accordion-content" 
+      id="std-content-{{ std.id }}"
+      style="display: {% if selected_standard == std.id or search_query %}block{% else %}none{% endif %};"
+    >
+      <div style="padding: 1.25rem; border-top: 1px solid var(--border-color); background: rgba(15, 23, 42, 0.55);">
+        
+        {% if std.subjects.all %}
+          <!-- Subjects Grid for this Standard -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1rem;">
+            {% for s in std.subjects.all %}
+            <div class="subject-subcard">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; gap: 0.5rem;">
+                <span class="badge-scheduled" style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700;">
+                  {{ s.code }}
+                </span>
+                <span class="role-badge role-STUDENT" style="font-size: 0.7rem; padding: 0.15rem 0.5rem;">
+                  👥 {{ s.enrolled_count }} enrolled
+                </span>
+              </div>
+
+              <h3 style="font-size: 1.05rem; font-weight: 700; color: #fff; margin: 0 0 0.35rem 0; line-height: 1.3;">
+                {{ s.name }}
+              </h3>
+
+              <p style="color: #94a3b8; font-size: 0.82rem; line-height: 1.4; margin: 0 0 0.85rem 0; flex: 1;">
+                {{ s.description|default:"Curriculum syllabus, coursework, and live interactive lectures." }}
+              </p>
+
+              <!-- Footer with Faculty & Actions -->
+              <div style="padding-top: 0.65rem; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; flex-wrap: wrap; gap: 0.4rem;">
+                <span style="color: var(--text-muted);">
+                  👨‍🏫 <strong style="color: #e2e8f0;">{{ s.teacher_display }}</strong>
+                </span>
+                {% if user.is_teacher or user.is_admin_user %}
+                <a href="{% url 'classrooms:class_list' %}" class="btn-subcard-action" title="Schedule live class for {{ s.name }}">
+                  🎥 Live Class
+                </a>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+
+          <!-- Add another subject button row inside class -->
+          {% if user.is_teacher or user.is_admin_user %}
+          <div style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+            <button 
+              type="button" 
+              class="btn btn-outline btn-sm" 
+              style="font-size: 0.78rem; padding: 0.35rem 0.75rem;"
+              onclick="openSubjectModalForStandard({{ std.id }})"
+            >
+              ➕ Add Subject to {{ std.name }}
+            </button>
+          </div>
+          {% endif %}
+
+        {% else %}
+          <!-- Empty State for this Standard -->
+          <div style="text-align: center; padding: 1.75rem 1rem; color: var(--text-muted);">
+            <div style="font-size: 1.5rem; margin-bottom: 0.35rem;">📖</div>
+            <div style="font-size: 0.95rem; font-weight: 600; color: #cbd5e1; margin-bottom: 0.25rem;">
+              No subjects registered under {{ std.name }} yet
+            </div>
+            <p style="font-size: 0.82rem; margin: 0 0 0.85rem 0;">
+              Add official subjects for this class level so students can enroll and teachers can schedule live classes.
+            </p>
+            {% if user.is_teacher or user.is_admin_user %}
+            <button 
+              type="button" 
+              class="btn btn-primary btn-sm"
+              onclick="openSubjectModalForStandard({{ std.id }})"
+            >
+              ➕ Add First Subject to {{ std.name }}
+            </button>
+            {% endif %}
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+  </div>
+  {% empty %}
+  <div class="card" style="text-align: center; padding: 3rem 1.5rem; color: var(--text-muted);">
+    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🔍</div>
+    <div style="font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 0.35rem;">
+      No academic classes match your search
+    </div>
+    <p style="font-size: 0.88rem; margin-bottom: 1.25rem;">
+      Try clearing your filter or registering a new academic standard.
+    </p>
+    <a href="{% url 'academics:subject_list' %}" class="btn btn-outline btn-sm">
+      Reset All Filters
+    </a>
+  </div>
+  {% endfor %}
+
+  <!-- General / Cross-Standard Subjects (if any exist) -->
+  {% if general_subjects %}
+  <div class="std-accordion-card" id="std-card-general">
+    <div 
+      class="std-accordion-header" 
+      id="std-header-general"
+      onclick="toggleStandard('general')"
+      title="Click to toggle general subjects"
+    >
+      <div style="display: flex; align-items: center; gap: 0.85rem; flex: 1;">
+        <div class="std-icon-box" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8;">
+          🌐
+        </div>
+        <div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <h2 style="font-size: 1.12rem; font-weight: 800; color: #fff; margin: 0;">
+              General &amp; Cross-Standard Subjects
+            </h2>
+            <span class="badge-scheduled" style="font-size: 0.7rem; padding: 0.15rem 0.45rem;">
+              SPECIAL
+            </span>
+          </div>
+          <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem;">
+            Open foundation courses and supplementary curriculum
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <span class="std-count-pill has-subjects">
+          {{ general_subjects|length }} Subject{{ general_subjects|length|pluralize }}
+        </span>
+        <div class="std-arrow-circle">
+          <span class="std-accordion-arrow" id="std-arrow-general">▼</span>
+        </div>
+      </div>
+    </div>
+
+    <div 
+      class="std-accordion-content" 
+      id="std-content-general"
+      style="display: none;"
+    >
+      <div style="padding: 1.25rem; border-top: 1px solid var(--border-color); background: rgba(15, 23, 42, 0.55);">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1rem;">
+          {% for s in general_subjects %}
+          <div class="subject-subcard">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; gap: 0.5rem;">
+              <span class="badge-scheduled" style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700;">
+                {{ s.code }}
+              </span>
+              <span class="role-badge role-STUDENT" style="font-size: 0.7rem; padding: 0.15rem 0.5rem;">
+                👥 {{ s.enrolled_count }} enrolled
+              </span>
+            </div>
+
+            <h3 style="font-size: 1.05rem; font-weight: 700; color: #fff; margin: 0 0 0.35rem 0;">
+              {{ s.name }}
+            </h3>
+
+            <p style="color: #94a3b8; font-size: 0.82rem; line-height: 1.4; margin: 0 0 0.85rem 0; flex: 1;">
+              {{ s.description|default:"Open curriculum syllabus and coursework." }}
+            </p>
+
+            <div style="padding-top: 0.65rem; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem;">
+              <span style="color: var(--text-muted);">
+                👨‍🏫 <strong style="color: #e2e8f0;">{{ s.teacher_display }}</strong>
+              </span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Modal: Create Subject (Compact & Guaranteed Inside Screen) -->
+{% if form %}
+<div id="createSubjectModal" class="modal-overlay">
+  <div class="modal-content compact-modal-content" style="max-width: 440px; width: 92%; max-height: calc(100vh - 2.5rem); overflow-y: auto; padding: 1.15rem 1.35rem; margin: auto;">
+    
+    <!-- Modal Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+      <h2 style="font-size: 1.1rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 0.45rem;">
+        <span>📚</span> <span>Register New Subject</span>
+      </h2>
+      <button 
+        type="button"
+        onclick="closeModal('createSubjectModal')" 
+        style="background: none; border: none; color: var(--text-muted); font-size: 1.35rem; cursor: pointer; line-height: 1; padding: 0.1rem 0.35rem; border-radius: 4px;"
+        title="Close modal"
+      >&times;</button>
+    </div>
+
+    <!-- Modal Form -->
+    <form method="post">
+      {% csrf_token %}
+      
+      <!-- Row 1: Standard & Code in 2 columns -->
+      <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 0.65rem; margin-bottom: 0.65rem;">
+        <div>
+          <label class="compact-modal-label">Class / Standard *</label>
+          {{ form.standard }}
+        </div>
+        <div>
+          <label class="compact-modal-label">Code *</label>
+          {{ form.code }}
+        </div>
+      </div>
+
+      <!-- Row 2: Subject Name -->
+      <div style="margin-bottom: 0.65rem;">
+        <label class="compact-modal-label">Subject Name *</label>
+        {{ form.name }}
+      </div>
+
+      <!-- Row 3: Assigned Teacher -->
+      <div style="margin-bottom: 0.65rem;">
+        <label class="compact-modal-label">Faculty Mentor <small style="color: var(--text-muted); font-weight: normal;">(Optional)</small></label>
+        {{ form.teacher }}
+      </div>
+
+      <!-- Row 4: Description / Syllabus -->
+      <div style="margin-bottom: 0.85rem;">
+        <label class="compact-modal-label">Syllabus Outline <small style="color: var(--text-muted); font-weight: normal;">(Optional)</small></label>
+        {{ form.description }}
+      </div>
+
+      <!-- Modal Footer Actions -->
+      <div style="display: flex; gap: 0.65rem; justify-content: flex-end; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
+        <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('createSubjectModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm" style="padding: 0.45rem 1rem;">Save Subject</button>
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endif %}
+
+<!-- ============================================================== -->
+<!-- CSS STYLING & ACCORDION BEHAVIOR                             -->
+<!-- ============================================================== -->
+<style>
+  /* Standard Accordion Card */
+  .std-accordion-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: all 0.2s ease;
+  }
+  .std-accordion-card:hover {
+    border-color: rgba(56, 189, 248, 0.4);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Header Bar */
+  .std-accordion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.95rem 1.25rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease;
+    gap: 0.75rem;
+  }
+  .std-accordion-header:hover {
+    background: rgba(56, 189, 248, 0.04);
+  }
+  .std-accordion-header.is-open {
+    background: rgba(14, 165, 233, 0.08);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  /* Avatar Box */
+  .std-icon-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.2), rgba(2, 132, 199, 0.1));
+    color: #38bdf8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    flex-shrink: 0;
+  }
+
+  /* Subject Count Pills */
+  .std-count-pill {
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.3rem 0.75rem;
+    border-radius: 9999px;
+    white-space: nowrap;
+  }
+  .std-count-pill.has-subjects {
+    background: rgba(14, 165, 233, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(14, 165, 233, 0.3);
+  }
+  .std-count-pill.empty-subjects {
+    background: rgba(148, 163, 184, 0.1);
+    color: var(--text-muted);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+  }
+
+  /* Arrow Circle */
+  .std-arrow-circle {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .std-accordion-arrow {
+    display: inline-block;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .std-accordion-header.is-open .std-accordion-arrow {
+    transform: rotate(180deg);
+    color: #38bdf8;
+  }
+
+  /* Subject Sub-Card */
+  .subject-subcard {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .subject-subcard:hover {
+    transform: translateY(-2px);
+    border-color: rgba(56, 189, 248, 0.35);
+  }
+
+  .btn-subcard-action {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #38bdf8;
+    text-decoration: none;
+    background: rgba(56, 189, 248, 0.1);
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    transition: all 0.15s ease;
+  }
+  .btn-subcard-action:hover {
+    background: rgba(56, 189, 248, 0.2);
+    color: #fff;
+  }
+
+  /* Compact Modal Styles */
+  .compact-modal-label {
+    display: block;
+    font-size: 0.77rem;
+    font-weight: 700;
+    color: #cbd5e1;
+    margin-bottom: 0.2rem;
+    letter-spacing: -0.1px;
+  }
+  #createSubjectModal .form-input,
+  #createSubjectModal .form-select {
+    padding: 0.42rem 0.65rem;
+    font-size: 0.84rem;
+    width: 100%;
+    margin-bottom: 0;
+    border-radius: 6px;
+    box-sizing: border-box;
+  }
+  #createSubjectModal textarea.form-input {
+    min-height: 48px;
+    height: 52px;
+    resize: vertical;
+    line-height: 1.35;
+  }
+</style>
+
+<script>
+  function toggleStandard(stdId) {
+    const content = document.getElementById('std-content-' + stdId);
+    const header = document.getElementById('std-header-' + stdId);
+    if (!content) return;
+
+    const isVisible = content.style.display !== 'none';
+    if (isVisible) {
+      content.style.display = 'none';
+      if (header) header.classList.remove('is-open');
+    } else {
+      content.style.display = 'block';
+      if (header) header.classList.add('is-open');
+    }
+  }
+
+  function expandAllStandards() {
+    document.querySelectorAll('.std-accordion-content').forEach(el => {
+      el.style.display = 'block';
+    });
+    document.querySelectorAll('.std-accordion-header').forEach(hdr => {
+      hdr.classList.add('is-open');
+    });
+  }
+
+  function collapseAllStandards() {
+    document.querySelectorAll('.std-accordion-content').forEach(el => {
+      el.style.display = 'none';
+    });
+    document.querySelectorAll('.std-accordion-header').forEach(hdr => {
+      hdr.classList.remove('is-open');
+    });
+  }
+
+  function openSubjectModalForStandard(standardId) {
+    const stdSelect = document.querySelector('#createSubjectModal select[name="standard"]');
+    if (stdSelect && standardId) {
+      stdSelect.value = standardId;
+    }
+    openModal('createSubjectModal');
+  }
+
+  // If a specific standard is filtered or opened initially, mark its header as is-open
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.std-accordion-content').forEach(el => {
+      if (el.style.display === 'block') {
+        const id = el.id.replace('std-content-', '');
+        const hdr = document.getElementById('std-header-' + id);
+        if (hdr) hdr.classList.add('is-open');
+      }
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,343 @@
+{% extends 'base.html' %}
+
+{% block title %}Students Directory | Ace Online{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+      <span style="font-size: 1.5rem;">🎒</span>
+      <h1 style="font-size: 1.8rem; font-weight: 800; color: #fff; margin: 0;">Enrolled Students Directory</h1>
+    </div>
+    <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">
+      Browse students, class levels (1st Standard to PG), enrolled subjects, and custom on-demand subject requests.
+    </p>
+  </div>
+  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+    <a href="{% url 'academics:on_demand_list' %}" class="btn btn-outline btn-sm" style="border-color: #38bdf8; color: #38bdf8;">
+      📥 On-Demand Requests
+    </a>
+    <a href="{% url 'academics:standard_list' %}" class="btn btn-outline btn-sm">
+      🎓 Standards / Classes
+    </a>
+    <a href="{% url 'accounts:student_create' %}" class="btn btn-primary btn-sm">
+      ➕ Register Student (Admin)
+    </a>
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- NEW STUDENT APPLICATIONS (PENDING ADMIN APPROVAL)              -->
+<!-- ============================================================== -->
+{% if pending_applications %}
+<div class="card" style="margin-bottom: 2rem; border-color: rgba(234, 179, 8, 0.4); padding: 0; overflow: hidden; background: rgba(234, 179, 8, 0.03); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+  <div style="padding: 1rem 1.25rem; border-bottom: 1px solid rgba(234, 179, 8, 0.25); display: flex; justify-content: space-between; align-items: center; background: rgba(234, 179, 8, 0.08); flex-wrap: wrap; gap: 0.5rem;">
+    <div style="display: flex; align-items: center; gap: 0.6rem;">
+      <span class="pulse-dot" style="background: #fbbf24;"></span>
+      <h2 style="font-size: 1.1rem; font-weight: 800; color: #fbbf24; margin: 0;">
+        New Student Applications ({{ pending_applications.count }})
+      </h2>
+    </div>
+    <div style="font-size: 0.82rem; color: #cbd5e1;">
+      Approve applicants to include them into their respective classes and approve custom on-demand subjects.
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table" style="margin: 0;">
+      <thead>
+        <tr>
+          <th>Applicant Details</th>
+          <th>Applied Class</th>
+          <th>Selected Subjects</th>
+          <th>On-Demand Subjects</th>
+          <th>Parent Contact</th>
+          <th>Applied On</th>
+          <th style="text-align: right;">Admission Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for app in pending_applications %}
+        <tr style="background: rgba(234, 179, 8, 0.02);">
+          <!-- Applicant Details -->
+          <td>
+            <div style="font-weight: 700; color: #fff; font-size: 0.95rem;">
+              {{ app.get_full_name|default:app.username }}
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); display: flex; gap: 0.45rem; flex-wrap: wrap;">
+              <code>@{{ app.username }}</code>
+              {% if app.email %}<span>&bull; {{ app.email }}</span>{% endif %}
+              {% if app.phone %}<span>&bull; 📞 {{ app.phone }}</span>{% endif %}
+            </div>
+          </td>
+
+          <!-- Applied Class -->
+          <td>
+            {% if app.student_profile.standard %}
+              <span class="role-badge role-TEACHER" style="font-size: 0.78rem; font-weight: 700;">
+                {{ app.student_profile.standard.name }}
+              </span>
+            {% else %}
+              <span style="color: var(--text-muted); font-size: 0.8rem;">Unassigned</span>
+            {% endif %}
+          </td>
+
+          <!-- Selected Official Subjects -->
+          <td>
+            <div style="display: flex; gap: 0.35rem; flex-wrap: wrap; max-width: 260px;">
+              {% for sub in app.student_profile.enrolled_subjects.all %}
+                <span class="badge-scheduled" style="font-size: 0.72rem; padding: 0.15rem 0.45rem;">
+                  {{ sub.name }}
+                </span>
+              {% empty %}
+                <span style="color: var(--text-subtle); font-size: 0.78rem;">None selected</span>
+              {% endfor %}
+            </div>
+          </td>
+
+          <!-- Requested On-Demand Subjects & Direct Approval -->
+          <td>
+            <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+              {% for req in app.on_demand_requests.all %}
+                {% if req.status == 'PENDING' %}
+                  <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                    <span style="font-size: 0.78rem; font-weight: 700; color: #fbbf24;">⚡ {{ req.subject_name }}</span>
+                    <form method="post" action="{% url 'academics:on_demand_approve' req.id %}" style="display: inline; margin: 0;">
+                      {% csrf_token %}
+                      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                      <input type="hidden" name="subject_name" value="{{ req.subject_name }}">
+                      <button 
+                        type="submit" 
+                        class="btn btn-sm" 
+                        style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 4px; cursor: pointer;"
+                        title="Approve this on-demand subject and add to {{ app.student_profile.standard.name }}"
+                      >
+                        ✓ Approve
+                      </button>
+                    </form>
+                  </div>
+                {% elif req.status == 'APPROVED' %}
+                  <span class="badge-completed" style="font-size: 0.72rem; width: fit-content;" title="Subject approved and added to class">
+                    ✓ {{ req.subject_name }} (Approved)
+                  </span>
+                {% else %}
+                  <span style="color: #94a3b8; font-size: 0.72rem; text-decoration: line-through;">
+                    {{ req.subject_name }}
+                  </span>
+                {% endif %}
+              {% empty %}
+                <span style="color: var(--text-subtle); font-size: 0.78rem;">None</span>
+              {% endfor %}
+            </div>
+          </td>
+
+          <!-- Parent Contact -->
+          <td>
+            <div style="font-size: 0.85rem; color: #cbd5e1;">
+              {{ app.student_profile.parent_name|default:"-" }}
+            </div>
+            {% if app.student_profile.parent_phone %}
+              <div style="font-size: 0.75rem; color: var(--text-muted);">
+                📞 {{ app.student_profile.parent_phone }}
+              </div>
+            {% endif %}
+          </td>
+
+          <!-- Applied On -->
+          <td>
+            <span style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">
+              {{ app.date_joined|date:"M d, Y" }}
+            </span>
+          </td>
+
+          <!-- Admission Action Buttons -->
+          <td style="text-align: right; white-space: nowrap;">
+            <form method="post" action="{% url 'accounts:student_approve' app.id %}" style="display: inline-block;">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button 
+                type="submit" 
+                class="btn btn-success btn-sm" 
+                style="font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.75rem;"
+                onclick="return confirm('Approve {{ app.get_full_name|default:app.username }} into {{ app.student_profile.standard.name }}?');"
+              >
+                ✅ Approve &amp; Enroll
+              </button>
+            </form>
+            
+            <form method="post" action="{% url 'accounts:student_reject' app.id %}" style="display: inline-block; margin-left: 0.35rem;">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button 
+                type="submit" 
+                class="btn btn-outline btn-sm" 
+                style="font-size: 0.78rem; padding: 0.35rem 0.55rem; color: #f87171; border-color: rgba(239, 68, 68, 0.3);"
+                onclick="return confirm('Decline application for {{ app.username }}?');"
+              >
+                ✕ Decline
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Search & Standard Filter Bar -->
+<div class="card" style="padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
+  <form method="get" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <!-- Search Query -->
+    <div style="display: flex; gap: 0.5rem; flex: 1; min-width: 250px;">
+      <input 
+        type="text" 
+        name="q" 
+        value="{{ q }}" 
+        class="form-input" 
+        placeholder="Search enrolled students by name, username, contact..." 
+        style="margin: 0;"
+      >
+      <button type="submit" class="btn btn-outline btn-sm" style="white-space: nowrap;">
+        🔍 Search
+      </button>
+      {% if q or selected_standard %}
+        <a href="{% url 'accounts:student_list' %}" class="btn btn-outline btn-sm" style="color: #f87171; border-color: rgba(239, 68, 68, 0.3);" title="Clear Filters">
+          ✕
+        </a>
+      {% endif %}
+    </div>
+
+    <!-- Standard Filter Dropdown -->
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Filter by Class:</label>
+      <select name="standard" class="form-select" onchange="this.form.submit()" style="padding: 0.4rem 0.85rem; font-size: 0.88rem; min-width: 190px;">
+        <option value="">All Standards</option>
+        {% for std in standards %}
+          <option value="{{ std.id }}" {% if selected_standard == std.id %}selected{% endif %}>
+            {{ std.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </form>
+</div>
+
+<!-- Enrolled Students Directory Table Card -->
+<div class="card" style="padding: 0; overflow: hidden;">
+  <div style="padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.4);">
+    <div style="font-weight: 700; color: #fff; font-size: 0.92rem;">
+      Admitted / Enrolled Students ({{ students|length }})
+    </div>
+    <div style="font-size: 0.78rem; color: var(--text-subtle);">
+      Active students participating in tuition classes and exams
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table" style="margin: 0;">
+      <thead>
+        <tr>
+          <th>Student Details</th>
+          <th>Standard / Class</th>
+          <th>Enrolled Subjects</th>
+          <th>On-Demand Requests</th>
+          <th>Parent / Guardian</th>
+          <th>Joined</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in students %}
+        <tr>
+          <td>
+            <div style="font-weight: 700; color: #fff; font-size: 0.95rem;">
+              {{ s.get_full_name|default:s.username }}
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <code>@{{ s.username }}</code>
+              {% if s.email %}<span>&bull; {{ s.email }}</span>{% endif %}
+              {% if s.phone %}<span>&bull; {{ s.phone }}</span>{% endif %}
+            </div>
+          </td>
+          <td>
+            {% if s.student_profile.standard %}
+              <span class="role-badge role-TEACHER" style="font-size: 0.75rem;">
+                {{ s.student_profile.standard.name }}
+              </span>
+            {% elif s.student_profile.grade_level %}
+              <span class="role-badge" style="font-size: 0.75rem; background: rgba(148, 163, 184, 0.15); color: #94a3b8;">
+                {{ s.student_profile.grade_level }}
+              </span>
+            {% else %}
+              <span style="color: var(--text-subtle); font-size: 0.8rem;">Unassigned</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display: flex; gap: 0.3rem; flex-wrap: wrap; max-width: 280px;">
+              {% for sub in s.student_profile.enrolled_subjects.all %}
+                <span class="badge-scheduled" style="font-size: 0.72rem; padding: 0.15rem 0.45rem;">
+                  {{ sub.name }}
+                </span>
+              {% empty %}
+                <span style="color: var(--text-subtle); font-size: 0.78rem;">No subjects selected</span>
+              {% endfor %}
+            </div>
+          </td>
+          <td>
+            <div style="display: flex; gap: 0.3rem; flex-wrap: wrap;">
+              {% for req in s.on_demand_requests.all %}
+                {% if req.status == 'PENDING' %}
+                  <a href="{% url 'academics:on_demand_list' %}" class="pulse-badge" style="background: rgba(234, 179, 8, 0.15); color: #fbbf24; border: 1px solid rgba(234, 179, 8, 0.3); font-size: 0.72rem; text-decoration: none;" title="Pending Admin Approval">
+                    ⚡ {{ req.subject_name }}
+                  </a>
+                {% elif req.status == 'APPROVED' %}
+                  <span class="badge-completed" style="font-size: 0.72rem;" title="Approved &amp; Added">
+                    ✓ {{ req.subject_name }}
+                  </span>
+                {% else %}
+                  <span style="color: #94a3b8; font-size: 0.72rem; text-decoration: line-through;" title="Declined">
+                    {{ req.subject_name }}
+                  </span>
+                {% endif %}
+              {% empty %}
+                <span style="color: var(--text-subtle); font-size: 0.78rem;">None</span>
+              {% endfor %}
+            </div>
+          </td>
+          <td>
+            <div style="font-size: 0.85rem; color: #cbd5e1;">
+              {{ s.student_profile.parent_name|default:"-" }}
+            </div>
+            {% if s.student_profile.parent_phone %}
+              <div style="font-size: 0.75rem; color: var(--text-muted);">
+                📞 {{ s.student_profile.parent_phone }}
+              </div>
+            {% endif %}
+          </td>
+          <td>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">
+              {{ s.date_joined|date:"M d, Y" }}
+            </span>
+          </td>
+          <td>
+            {% if s.is_active %}
+              <span class="badge-completed" style="font-size: 0.72rem;">Active</span>
+            {% else %}
+              <span style="background: rgba(239, 68, 68, 0.15); color: #f87171; padding: 0.2rem 0.45rem; border-radius: 4px; font-size: 0.72rem;">Inactive</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+            No student enrollments found matching your query.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

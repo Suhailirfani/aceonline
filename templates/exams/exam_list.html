@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}Exams & Assessments | Ace Online{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="font-size: 1.8rem; font-weight: 800; color: #fff;">Exams & Mark Records</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Create assessments, track student performance, and input marks with instant auto-save</p>
+  </div>
+  {% if user.is_teacher or user.is_admin_user %}
+  <button class="btn btn-primary" onclick="openModal('createExamModal')">
+    ➕ Create New Exam
+  </button>
+  {% endif %}
+</div>
+
+<!-- Exams Table -->
+<div class="card">
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Exam Title</th>
+          <th>Standard / Class</th>
+          <th>Subject</th>
+          <th>Exam Date</th>
+          <th>Total Marks</th>
+          <th>Passing Marks</th>
+          <th>Class Average</th>
+          <th>Highest Score</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ex in exams %}
+        <tr>
+          <td style="font-weight: 700;">
+            <a href="{% url 'exams:marks_entry' ex.id %}" style="color: #fff; text-decoration: none;">
+              {{ ex.title }}
+            </a>
+          </td>
+          <td>
+            <span class="role-badge role-TEACHER" style="font-size: 0.72rem;">
+              {{ ex.subject.standard.name|default:"General" }}
+            </span>
+          </td>
+          <td>{{ ex.subject.name }} <small style="color: var(--text-muted);">({{ ex.subject.code }})</small></td>
+          <td>{{ ex.exam_date|date:"M d, Y" }}</td>
+          <td><strong>{{ ex.total_marks }}</strong></td>
+          <td>{{ ex.passing_marks }}</td>
+          <td style="color: #38bdf8; font-weight: 700;">{{ ex.average_score }}</td>
+          <td style="color: #34d399; font-weight: 700;">{{ ex.highest_score }}</td>
+          <td>
+            {% if user.is_teacher or user.is_admin_user %}
+              <a href="{% url 'exams:marks_entry' ex.id %}" class="btn btn-primary btn-sm">
+                ✏️ Enter Marks
+              </a>
+            {% else %}
+              <a href="{% url 'exams:student_results' %}" class="btn btn-outline btn-sm">
+                View My Score
+              </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">
+            No exams created yet. {% if user.is_teacher or user.is_admin_user %}Click <strong>"Create New Exam"</strong> to start.{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal: Create Exam -->
+{% if form %}
+<div id="createExamModal" class="modal-overlay">
+  <div class="modal-content">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h2 style="font-size: 1.3rem; font-weight: 800; color: #fff;">Create New Exam</h2>
+      <button onclick="closeModal('createExamModal')" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Curriculum Subject &amp; Class Level *</label>
+        {{ form.subject }}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Exam Title *</label>
+        {{ form.title }}
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Total Marks *</label>
+          {{ form.total_marks }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Passing Marks *</label>
+          {{ form.passing_marks }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Exam Date *</label>
+        {{ form.exam_date }}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Description / Topics</label>
+        {{ form.description }}
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <button type="button" class="btn btn-outline" onclick="closeModal('createExamModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Exam & Initialize Sheet</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

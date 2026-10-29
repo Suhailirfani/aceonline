@@ -1,0 +1,126 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Ace Online | Tuition Platform{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/main.css' %}?v={% now 'U' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <a href="{% url 'home' %}" class="nav-brand">
+      <div class="brand-icon">⚡</div>
+      <span>Ace Online</span>
+    </a>
+
+    {% if user.is_authenticated %}
+    <nav>
+      <ul class="nav-links">
+        <li>
+          {% if user.is_admin_user %}
+            <a href="{% url 'dashboards:admin_dashboard' %}" class="nav-link">Dashboard</a>
+          {% elif user.is_teacher %}
+            <a href="{% url 'dashboards:teacher_dashboard' %}" class="nav-link">Dashboard</a>
+          {% else %}
+            <a href="{% url 'dashboards:student_dashboard' %}" class="nav-link">Dashboard</a>
+          {% endif %}
+        </li>
+        <li><a href="{% url 'classrooms:class_list' %}" class="nav-link">Live Classes</a></li>
+        <li><a href="{% url 'academics:subject_list' %}" class="nav-link">Subjects</a></li>
+        {% if user.is_admin_user %}
+        <li><a href="{% url 'academics:standard_list' %}" class="nav-link">Standards</a></li>
+        <li><a href="{% url 'accounts:student_list' %}" class="nav-link">Students</a></li>
+        <li><a href="{% url 'accounts:teacher_list' %}" class="nav-link">Teachers</a></li>
+        {% endif %}
+        <li>
+          {% if user.is_student %}
+            <a href="{% url 'exams:student_results' %}" class="nav-link">My Results</a>
+          {% else %}
+            <a href="{% url 'exams:exam_list' %}" class="nav-link">Exams & Marks</a>
+          {% endif %}
+        </li>
+      </ul>
+    </nav>
+
+    <div class="nav-user">
+      <span class="role-badge role-{{ user.role }}">
+        {{ user.get_role_display }}
+      </span>
+      <span style="font-size: 0.9rem; font-weight: 600;">
+        {{ user.get_full_name|default:user.username }}
+      </span>
+      <a href="{% url 'accounts:logout' %}" class="btn btn-outline btn-sm">Logout</a>
+    </div>
+    {% else %}
+    <div class="nav-user">
+      <a href="{% url 'accounts:login' %}" class="btn btn-outline btn-sm">Log In</a>
+      <a href="{% url 'accounts:register_student' %}" class="btn btn-primary btn-sm">Student Signup</a>
+      <a href="{% url 'accounts:register_teacher' %}" class="btn btn-outline btn-sm" style="border-color: #38bdf8; color: #38bdf8;">Teacher Signup</a>
+    </div>
+    {% endif %}
+  </header>
+
+  <!-- Flash Messages -->
+  {% if messages %}
+  <div class="container" style="padding-top: 1rem; padding-bottom: 0;">
+    {% for message in messages %}
+      <div class="toast toast-{{ message.tags }}" style="margin-bottom: 0.5rem; width: 100%; max-width: 600px;">
+        <div>{{ message }}</div>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Main Body Content -->
+  <main class="{% block main_class %}container{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block footer %}
+  <footer class="footer">
+    <p>&copy; 2026 Ace Online Tuition Institution. All rights reserved.</p>
+  </footer>
+  {% endblock %}
+
+  <!-- Fixed Mobile Bottom Navigation for Native App-like Experience -->
+  {% if user.is_authenticated %}
+  <nav class="mobile-bottom-nav">
+    <a href="{% url 'dashboard_redirect' %}" class="mobile-nav-item">
+      <span class="nav-icon">🏠</span>
+      <span>Dashboard</span>
+    </a>
+    <a href="{% url 'academics:subject_list' %}" class="mobile-nav-item">
+      <span class="nav-icon">📚</span>
+      <span>Subjects</span>
+    </a>
+    <a href="{% url 'classrooms:class_list' %}" class="mobile-nav-item">
+      <span class="nav-icon">🎥</span>
+      <span>Live</span>
+    </a>
+    {% if user.is_student %}
+      <a href="{% url 'exams:student_results' %}" class="mobile-nav-item">
+        <span class="nav-icon">📊</span>
+        <span>Results</span>
+      </a>
+    {% else %}
+      <a href="{% url 'exams:exam_list' %}" class="mobile-nav-item">
+        <span class="nav-icon">📝</span>
+        <span>Exams</span>
+      </a>
+    {% endif %}
+    <a href="{% url 'accounts:logout' %}" class="mobile-nav-item">
+      <span class="nav-icon">🚪</span>
+      <span>Exit</span>
+    </a>
+  </nav>
+  {% endif %}
+
+  <div id="toast-container"></div>
+  <script src="{% static 'js/app.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,483 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Registration &amp; Subject Selection | Ace Online{% endblock %}
+
+{% block content %}
+<div style="max-width: {% if user.is_admin_user %}1040px{% else %}720px{% endif %}; margin: 2rem auto 3.5rem;">
+
+  {% if user.is_admin_user %}
+  <!-- NEW STUDENT APPLICATIONS FOR ADMIN -->
+  <div class="card" style="margin-bottom: 2rem; border-color: rgba(234, 179, 8, 0.4); padding: 0; overflow: hidden; background: rgba(234, 179, 8, 0.03); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+    <div style="padding: 1rem 1.25rem; border-bottom: 1px solid rgba(234, 179, 8, 0.25); display: flex; justify-content: space-between; align-items: center; background: rgba(234, 179, 8, 0.08); flex-wrap: wrap; gap: 0.5rem;">
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <span class="pulse-dot" style="background: #fbbf24;"></span>
+        <h2 style="font-size: 1.1rem; font-weight: 800; color: #fbbf24; margin: 0;">
+          New Student Applications ({{ pending_applications|length }})
+        </h2>
+      </div>
+      <div style="font-size: 0.82rem; color: #cbd5e1;">
+        Approve applicant admissions and requested on-demand subjects to include students in their respective classes.
+      </div>
+    </div>
+
+    {% if pending_applications %}
+    <div class="table-responsive">
+      <table class="table" style="margin: 0; font-size: 0.85rem;">
+        <thead>
+          <tr>
+            <th>Applicant Details</th>
+            <th>Class</th>
+            <th>Selected Subjects</th>
+            <th>On-Demand Subjects</th>
+            <th>Contact</th>
+            <th style="text-align: right;">Admission Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in pending_applications %}
+          <tr style="background: rgba(234, 179, 8, 0.02);">
+            <td>
+              <div style="font-weight: 700; color: #fff;">{{ app.get_full_name|default:app.username }}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">
+                <code>@{{ app.username }}</code> &bull; {{ app.date_joined|date:"M d, Y" }}
+              </div>
+            </td>
+            <td>
+              <span class="role-badge role-TEACHER" style="font-size: 0.75rem;">
+                {{ app.student_profile.standard.name|default:"Unassigned" }}
+              </span>
+            </td>
+            <td>
+              <div style="display: flex; gap: 0.3rem; flex-wrap: wrap; max-width: 220px;">
+                {% for sub in app.student_profile.enrolled_subjects.all %}
+                  <span class="badge-scheduled" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">
+                    {{ sub.name }}
+                  </span>
+                {% empty %}
+                  <span style="color: var(--text-subtle); font-size: 0.75rem;">None</span>
+                {% endfor %}
+              </div>
+            </td>
+            <td>
+              <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+                {% for req in app.on_demand_requests.all %}
+                  {% if req.status == 'PENDING' %}
+                    <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                      <span style="font-size: 0.75rem; font-weight: 700; color: #fbbf24;">⚡ {{ req.subject_name }}</span>
+                      <form method="post" action="{% url 'academics:on_demand_approve' req.id %}" style="display: inline; margin: 0;">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <input type="hidden" name="subject_name" value="{{ req.subject_name }}">
+                        <button type="submit" class="btn btn-sm" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.68rem; padding: 0.15rem 0.45rem; border-radius: 4px; cursor: pointer;" title="Approve on-demand subject and add to {{ app.student_profile.standard.name }}">
+                          ✓ Approve
+                        </button>
+                      </form>
+                    </div>
+                  {% elif req.status == 'APPROVED' %}
+                    <span class="badge-completed" style="font-size: 0.7rem;">✓ {{ req.subject_name }} (Approved)</span>
+                  {% else %}
+                    <span style="color: #94a3b8; font-size: 0.7rem; text-decoration: line-through;">{{ req.subject_name }}</span>
+                  {% endif %}
+                {% empty %}
+                  <span style="color: var(--text-subtle); font-size: 0.75rem;">None</span>
+                {% endfor %}
+              </div>
+            </td>
+            <td>
+              <div style="font-size: 0.8rem; color: #cbd5e1;">{{ app.phone|default:app.email }}</div>
+              {% if app.student_profile.parent_phone %}
+                <div style="font-size: 0.72rem; color: var(--text-muted);">Parent: {{ app.student_profile.parent_phone }}</div>
+              {% endif %}
+            </td>
+            <td style="text-align: right; white-space: nowrap;">
+              <form method="post" action="{% url 'accounts:student_approve' app.id %}" style="display: inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="btn btn-success btn-sm" style="font-size: 0.75rem; font-weight: 700; padding: 0.3rem 0.65rem;" onclick="return confirm('Approve admission for {{ app.get_full_name|default:app.username }}?');">
+                  ✅ Approve &amp; Enroll
+                </button>
+              </form>
+              <form method="post" action="{% url 'accounts:student_reject' app.id %}" style="display: inline-block; margin-left: 0.3rem;">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.3rem 0.5rem; color: #f87171; border-color: rgba(239, 68, 68, 0.3);" onclick="return confirm('Decline application for {{ app.username }}?');">
+                  ✕ Decline
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.88rem;">
+      <span>🎉 No pending student applications right now.</span>
+      <div style="font-size: 0.78rem; color: var(--text-subtle); margin-top: 0.3rem;">
+        When students register online, their admission details and requested on-demand subjects will appear here for one-click approval and class inclusion.
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- PENDING ON-DEMAND SUBJECTS AWAITING APPROVAL -->
+  {% if pending_on_demand_subjects %}
+  <div class="card" style="margin-bottom: 2rem; border-color: rgba(56, 189, 248, 0.35); padding: 0; overflow: hidden; background: rgba(56, 189, 248, 0.02); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+    <div style="padding: 0.85rem 1.25rem; border-bottom: 1px solid rgba(56, 189, 248, 0.2); display: flex; justify-content: space-between; align-items: center; background: rgba(56, 189, 248, 0.06); flex-wrap: wrap; gap: 0.5rem;">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-size: 1rem;">⚡</span>
+        <h3 style="font-size: 0.98rem; font-weight: 800; color: #38bdf8; margin: 0;">
+          On-Demand Subjects Awaiting Approval ({{ pending_on_demand_subjects|length }})
+        </h3>
+      </div>
+      <div style="font-size: 0.78rem; color: #94a3b8;">
+        Click <strong>✓ Approve</strong> to add the subject directly to the class syllabus and auto-enroll requesting students.
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table" style="margin: 0; font-size: 0.82rem;">
+        <thead>
+          <tr>
+            <th>Subject Name</th>
+            <th>Target Class / Standard</th>
+            <th>Requested By</th>
+            <th>Date Requested</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for req in pending_on_demand_subjects %}
+          <tr>
+            <td>
+              <span style="font-weight: 700; color: #fbbf24;">⚡ {{ req.subject_name }}</span>
+            </td>
+            <td>
+              <span class="role-badge role-TEACHER" style="font-size: 0.72rem;">{{ req.standard.name }}</span>
+            </td>
+            <td>
+              {% if req.requested_by %}
+                <span style="color: #fff; font-weight: 600;">{{ req.requested_by.get_full_name|default:req.requested_by.username }}</span>
+                <span style="color: var(--text-muted); font-size: 0.72rem;">(@{{ req.requested_by.username }})</span>
+              {% else %}
+                <span style="color: var(--text-muted);">{{ req.student_name|default:"Online Applicant" }}</span>
+              {% endif %}
+            </td>
+            <td style="color: var(--text-muted); font-size: 0.75rem;">
+              {{ req.created_at|date:"M d, Y" }}
+            </td>
+            <td style="text-align: right; white-space: nowrap;">
+              <form method="post" action="{% url 'academics:on_demand_approve' req.id %}" style="display: inline-block; margin: 0;">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <input type="hidden" name="subject_name" value="{{ req.subject_name }}">
+                <button type="submit" class="btn btn-sm btn-success" style="font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.65rem;" title="Approve and add to {{ req.standard.name }}">
+                  ✓ Approve
+                </button>
+              </form>
+              <form method="post" action="{% url 'academics:on_demand_reject' req.id %}" style="display: inline-block; margin-left: 0.3rem;">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="btn btn-outline btn-sm" style="font-size: 0.72rem; padding: 0.25rem 0.45rem; color: #f87171; border-color: rgba(239, 68, 68, 0.3);" onclick="return confirm('Reject this on-demand subject?');">
+                  ✕
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+  {% endif %}
+
+  <div class="card" style="padding: 2.25rem;">
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+      <div class="brand-icon" style="background: linear-gradient(135deg, #10b981, #059669);">🎒</div>
+      <div>
+        <h1 style="font-size: 1.5rem; font-weight: 800; color: #fff; margin: 0 0 0.25rem 0;">Student Registration</h1>
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">Enroll for specialized online tuition from 1st Standard up to Postgraduate</p>
+      </div>
+    </div>
+
+    <form method="post" id="studentRegistrationForm">
+      {% csrf_token %}
+      
+      {% if form.errors %}
+      <div class="toast toast-error" style="width: 100%; margin-bottom: 1.25rem;">
+        <div>Please correct the errors in the registration form below.</div>
+      </div>
+      {% endif %}
+
+      <!-- Name Fields -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">First Name *</label>
+          {{ form.first_name }}
+          {% if form.first_name.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.first_name.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name *</label>
+          {{ form.last_name }}
+          {% if form.last_name.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.last_name.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+
+      <!-- Account Username & Email -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Student Username *</label>
+          {{ form.username }}
+          {% if form.username.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.username.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address *</label>
+          {{ form.email }}
+          {% if form.email.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.email.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+
+      <!-- Phone & Class/Standard Choice -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Student Phone Number</label>
+          {{ form.phone }}
+          {% if form.phone.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.phone.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="font-weight: 700; color: #fff;">Standard / Class *</label>
+          {{ form.standard }}
+          {% if form.standard.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.standard.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+
+      <!-- DYNAMIC SUBJECTS SELECTION CONTAINER -->
+      <div id="subjects-selection-container" style="display: none; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div>
+            <div style="font-weight: 700; font-size: 0.95rem; color: #fff; display: flex; align-items: center; gap: 0.4rem;">
+              <span>📚</span>
+              <span>Available Subjects for <span id="selected-class-name" style="color: #38bdf8;">this Class</span></span>
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">Check all the subjects you wish to register for tuition:</div>
+          </div>
+          <div style="display: flex; gap: 0.4rem;">
+            <button type="button" class="btn btn-outline btn-sm" onclick="toggleSelectAllSubjects(true)" style="font-size: 0.72rem; padding: 0.25rem 0.55rem;">Select All</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="toggleSelectAllSubjects(false)" style="font-size: 0.72rem; padding: 0.25rem 0.55rem;">Clear</button>
+          </div>
+        </div>
+
+        <div id="loading-subjects" style="display: none; text-align: center; padding: 1rem; color: var(--text-muted); font-size: 0.88rem;">
+          ⏳ Loading subjects...
+        </div>
+
+        <!-- Checkbox grid dynamically loaded -->
+        <div id="subjects-checkbox-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 0.65rem; margin-bottom: 0.75rem;">
+          <!-- Injected via JavaScript -->
+        </div>
+
+        <div id="no-subjects-msg" style="display: none; color: #94a3b8; font-size: 0.82rem; padding: 0.5rem 0;">
+          No standard curriculum subjects pre-configured for this standard yet. Please use the option below to specify your wanted subjects!
+        </div>
+
+        <!-- ON-DEMAND OTHER SUBJECTS BOX -->
+        <div style="margin-top: 1rem; padding-top: 0.85rem; border-top: 1px dashed var(--border-color);">
+          <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; user-select: none;">
+            <input type="checkbox" id="other-subject-toggle" onchange="toggleOtherSubjectsBox(this.checked)" class="form-checkbox" style="width: 17px; height: 17px; cursor: pointer;">
+            <span style="font-weight: 700; color: #38bdf8; font-size: 0.88rem;">
+              ➕ Other Subject Wanted? (Request custom / on-demand subjects)
+            </span>
+          </label>
+
+          <div id="other-subjects-box" style="display: none; margin-top: 0.85rem; background: rgba(2, 132, 199, 0.08); padding: 0.95rem; border-radius: 8px; border: 1px solid rgba(2, 132, 199, 0.25);">
+            <div style="font-size: 0.78rem; color: #bae6fd; margin-bottom: 0.6rem;">
+              Type any additional subjects needed (e.g. <em>French, Accountancy, Environmental Studies, Statistics</em>). Our administrators will review and add them to your roster.
+            </div>
+            
+            <div id="other-subjects-container" style="display: flex; flex-direction: column; gap: 0.5rem;">
+              <div class="other-subject-entry" style="display: flex; gap: 0.5rem; align-items: center;">
+                <input 
+                  type="text" 
+                  name="other_subjects" 
+                  class="form-input" 
+                  placeholder="Type wanted subject name..." 
+                  style="margin: 0; flex: 1;"
+                >
+                <button type="button" class="btn btn-outline btn-sm" onclick="addOtherSubjectRow()" style="border-color: #38bdf8; color: #38bdf8; padding: 0.5rem 0.85rem;" title="Add another subject">
+                  ➕ Add More
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Parent Info -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Parent / Guardian Name</label>
+          {{ form.parent_name }}
+          {% if form.parent_name.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.parent_name.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Parent Contact Number</label>
+          {{ form.parent_phone }}
+          {% if form.parent_phone.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.parent_phone.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+
+      <!-- Address -->
+      <div class="form-group">
+        <label class="form-label">Residential Address</label>
+        {{ form.address }}
+        {% if form.address.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.address.errors.0 }}</div>{% endif %}
+      </div>
+
+      <!-- Password Fields -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Account Password *</label>
+          <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-bottom: 0.35rem;">Min. 5 characters (no strict rules)</small>
+          {{ form.password1 }}
+          {% if form.password1.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.password1.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm Password *</label>
+          {{ form.password2 }}
+          {% if form.password2.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.password2.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-success" style="width: 100%; padding: 0.85rem; margin-top: 1rem; font-size: 1rem; font-weight: 700;">
+        🚀 Complete Student Enrollment
+      </button>
+
+      <div style="text-align: center; margin-top: 1.5rem; font-size: 0.88rem; color: var(--text-muted);">
+        Already registered? <a href="{% url 'accounts:login' %}" style="color: var(--secondary); font-weight: 600;">Sign in to your portal</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function loadStandardSubjects(standardId) {
+    const container = document.getElementById('subjects-selection-container');
+    const grid = document.getElementById('subjects-checkbox-grid');
+    const loading = document.getElementById('loading-subjects');
+    const noSubMsg = document.getElementById('no-subjects-msg');
+    const classNameSpan = document.getElementById('selected-class-name');
+    const select = document.getElementById('standard-select');
+
+    if (!standardId) {
+      container.style.display = 'none';
+      grid.innerHTML = '';
+      return;
+    }
+
+    const selectedText = select.options[select.selectedIndex]?.text || '';
+    classNameSpan.textContent = selectedText;
+
+    container.style.display = 'block';
+    loading.style.display = 'block';
+    grid.innerHTML = '';
+    noSubMsg.style.display = 'none';
+
+    fetch(`/academics/api/standards/${standardId}/subjects/`)
+      .then(res => res.json())
+      .then(data => {
+        loading.style.display = 'none';
+        if (data.success && data.subjects && data.subjects.length > 0) {
+          data.subjects.forEach(sub => {
+            const label = document.createElement('label');
+            label.className = 'subject-checkbox-card';
+            label.style.cssText = 'display: flex; align-items: flex-start; gap: 0.6rem; background: var(--bg-card); padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: all 0.15s ease;';
+            
+            label.innerHTML = `
+              <input type="checkbox" name="subjects" value="${sub.id}" class="form-checkbox" style="margin-top: 3px; cursor: pointer;">
+              <div>
+                <strong style="display: block; font-size: 0.88rem; color: #fff; line-height: 1.2;">${sub.name}</strong>
+                <small style="font-size: 0.72rem; color: var(--text-subtle);">${sub.code}</small>
+              </div>
+            `;
+            
+            label.addEventListener('click', function(e) {
+              const chk = label.querySelector('input[type="checkbox"]');
+              if (chk.checked) {
+                label.style.borderColor = 'rgba(2, 132, 199, 0.6)';
+                label.style.background = 'rgba(2, 132, 199, 0.1)';
+              } else {
+                label.style.borderColor = 'var(--border-color)';
+                label.style.background = 'var(--bg-card)';
+              }
+            });
+
+            grid.appendChild(label);
+          });
+        } else {
+          noSubMsg.style.display = 'block';
+        }
+      })
+      .catch(err => {
+        loading.style.display = 'none';
+        noSubMsg.textContent = 'Unable to fetch subjects. Please select another class or request below.';
+        noSubMsg.style.display = 'block';
+      });
+  }
+
+  function toggleSelectAllSubjects(select) {
+    const checkboxes = document.querySelectorAll('#subjects-checkbox-grid input[type="checkbox"]');
+    checkboxes.forEach(cb => {
+      cb.checked = select;
+      const label = cb.closest('label');
+      if (label) {
+        if (select) {
+          label.style.borderColor = 'rgba(2, 132, 199, 0.6)';
+          label.style.background = 'rgba(2, 132, 199, 0.1)';
+        } else {
+          label.style.borderColor = 'var(--border-color)';
+          label.style.background = 'var(--bg-card)';
+        }
+      }
+    });
+  }
+
+  function toggleOtherSubjectsBox(show) {
+    const box = document.getElementById('other-subjects-box');
+    box.style.display = show ? 'block' : 'none';
+    if (show) {
+      const firstInput = box.querySelector('input[type="text"]');
+      if (firstInput) firstInput.focus();
+    }
+  }
+
+  function addOtherSubjectRow() {
+    const container = document.getElementById('other-subjects-container');
+    const row = document.createElement('div');
+    row.className = 'other-subject-entry';
+    row.style.cssText = 'display: flex; gap: 0.5rem; align-items: center; margin-top: 0.35rem;';
+    row.innerHTML = `
+      <input 
+        type="text" 
+        name="other_subjects" 
+        class="form-input" 
+        placeholder="Type another wanted subject..." 
+        style="margin: 0; flex: 1;"
+      >
+      <button type="button" class="btn btn-outline btn-sm" onclick="this.parentElement.remove()" style="color: #f87171; border-color: rgba(239, 68, 68, 0.3); padding: 0.5rem 0.75rem;" title="Remove this subject">
+        ✖
+      </button>
+    `;
+    container.appendChild(row);
+    row.querySelector('input').focus();
+  }
+
+  // Pre-trigger on load if standard is already chosen (e.g. form resubmission)
+  document.addEventListener('DOMContentLoaded', function() {
+    const select = document.getElementById('standard-select');
+    if (select && select.value) {
+      loadStandardSubjects(select.value);
+    }
+  });
+</script>
+{% endblock %}

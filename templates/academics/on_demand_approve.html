@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}Approve On-Demand Subject | Ace Online{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 2rem auto 3.5rem;">
+  <div style="margin-bottom: 1.5rem;">
+    <a href="{% url 'academics:on_demand_list' %}" style="color: var(--text-muted); font-size: 0.88rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; margin-bottom: 0.5rem;">
+      &larr; Back to On-Demand Requests
+    </a>
+    <h1 style="font-size: 1.7rem; font-weight: 800; color: #fff; margin: 0 0 0.25rem 0;">Approve &amp; Add Subject</h1>
+    <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">
+      Add this requested subject to the official curriculum for <strong>{{ req_obj.standard.name }}</strong>.
+    </p>
+  </div>
+
+  <!-- Summary Card of the Request -->
+  <div class="card" style="margin-bottom: 1.5rem; background: rgba(2, 132, 199, 0.08); border-color: rgba(2, 132, 199, 0.3); padding: 1.25rem;">
+    <div style="font-size: 0.82rem; color: #38bdf8; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem;">
+      Request Details
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.88rem;">
+      <div>
+        <span style="color: var(--text-muted);">Target Standard:</span>
+        <strong style="color: #fff; display: block;">{{ req_obj.standard.name }}</strong>
+      </div>
+      <div>
+        <span style="color: var(--text-muted);">Requested By:</span>
+        <strong style="color: #fff; display: block;">
+          {% if req_obj.student_name %}
+            {{ req_obj.student_name }}
+          {% elif req_obj.requested_by %}
+            {{ req_obj.requested_by.get_full_name|default:req_obj.requested_by.username }}
+          {% else %}
+            Applicant
+          {% endif %}
+        </strong>
+      </div>
+      <div>
+        <span style="color: var(--text-muted);">Student Contact:</span>
+        <span style="color: #cbd5e1; display: block;">
+          {% if req_obj.student_contact %}
+            {{ req_obj.student_contact }}
+          {% elif req_obj.requested_by %}
+            {{ req_obj.requested_by.phone|default:req_obj.requested_by.email|default:"-" }}
+          {% else %}
+            -
+          {% endif %}
+        </span>
+      </div>
+      <div>
+        <span style="color: var(--text-muted);">Date Requested:</span>
+        <span style="color: #cbd5e1; display: block;">{{ req_obj.created_at|date:"M d, Y" }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Approval & Creation Form -->
+  <div class="card" style="padding: 2rem;">
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label">Official Subject Name *</label>
+        <input 
+          type="text" 
+          name="subject_name" 
+          class="form-input" 
+          value="{{ req_obj.subject_name }}" 
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Subject Code (Leave blank to auto-generate)</label>
+        <input 
+          type="text" 
+          name="subject_code" 
+          class="form-input" 
+          placeholder="e.g. {{ req_obj.standard.code }}-{{ req_obj.subject_name|slugify|upper }}"
+        >
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+          Unique identifier for batch scheduling, timetable, and exams.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Description / Syllabus</label>
+        <textarea name="description" class="form-input" rows="3" placeholder="Overview of curriculum...">Official syllabus for {{ req_obj.subject_name }} under {{ req_obj.standard.name }}.</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Admin Approval Notes</label>
+        <input 
+          type="text" 
+          name="admin_notes" 
+          class="form-input" 
+          value="Approved by administration and added to {{ req_obj.standard.name }} curriculum."
+        >
+      </div>
+
+      <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 0.85rem; margin-top: 1.25rem; font-size: 0.82rem; color: #6ee7b7;">
+        ⚡ <strong>Auto-enrollment:</strong> Saving will add this subject to the official subjects list and immediately enroll <strong>{{ req_obj.student_name|default:req_obj.requested_by.username|default:"the applicant" }}</strong> in this subject.
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.75rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+        <a href="{% url 'academics:on_demand_list' %}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-primary">
+          ✅ Confirm &amp; Add to Class Roster
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

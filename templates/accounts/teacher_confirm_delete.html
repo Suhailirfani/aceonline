@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Teacher: {{ teacher.username }} | Ace Online{% endblock %}
+
+{% block content %}
+<div style="max-width: 580px; margin: 3rem auto;">
+  
+  <div style="margin-bottom: 1.25rem;">
+    <a href="{% url 'accounts:teacher_list' %}" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem;">
+      &larr; Back to Faculty Directory
+    </a>
+  </div>
+
+  <div class="card" style="border-color: rgba(239, 68, 68, 0.4); padding: 2rem;">
+    
+    <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.25rem;">
+      <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(239, 68, 68, 0.15); color: #f87171; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+        ⚠️
+      </div>
+      <div>
+        <h1 style="font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0 0 0.2rem 0;">Delete Teacher Account</h1>
+        <p style="color: #fca5a5; font-size: 0.85rem; margin: 0;">This action permanently removes the teacher's profile and credentials.</p>
+      </div>
+    </div>
+
+    <!-- Teacher Summary Card -->
+    <div style="background: var(--bg-card-subtle); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
+      <div style="font-weight: 700; color: #fff; font-size: 1.05rem; margin-bottom: 0.25rem;">
+        {{ teacher.get_full_name|default:teacher.username }}
+      </div>
+      <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem;">
+        <code>@{{ teacher.username }}</code> &bull; {{ teacher.email }}
+      </div>
+      <div style="font-size: 0.82rem; color: #38bdf8;">
+        Specialization: {{ teacher.teacher_profile.subject_specialization|default:"General Academics" }}
+      </div>
+    </div>
+
+    {% if subjects %}
+    <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 0.95rem; margin-bottom: 1.5rem;">
+      <div style="font-weight: 700; color: #fbbf24; font-size: 0.88rem; margin-bottom: 0.35rem;">
+        ⚠️ Currently Assigned Subjects ({{ subjects.count }})
+      </div>
+      <p style="font-size: 0.82rem; color: #fde68a; margin: 0 0 0.5rem 0;">
+        Deleting this teacher will unassign them from the following subjects without affecting student enrollments or curriculum data:
+      </p>
+      <ul style="font-size: 0.82rem; color: #e2e8f0; margin: 0; padding-left: 1.25rem;">
+        {% for s in subjects %}
+          <li><strong>{{ s.name }}</strong> ({{ s.standard.name }})</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <a href="{% url 'accounts:teacher_list' %}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-danger">Yes, Delete Teacher</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

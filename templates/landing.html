@@ -1,0 +1,362 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ace Online | Premier Online Tuition Institution</title>
+  <link rel="stylesheet" href="{% static 'css/landing.css' %}?v={% now 'U' %}">
+</head>
+<body class="ace-landing">
+
+  <!-- Top Navigation Bar -->
+  <header class="ace-nav">
+    <a href="{% url 'home' %}" class="ace-logo">
+      <div class="ace-logo-badge">⚡</div>
+      <span>Ace Online</span>
+    </a>
+
+    <ul class="ace-nav-menu" id="aceNavMenu">
+      <li><a href="#programs" class="ace-nav-link">Tuition Programs</a></li>
+      <li><a href="#features" class="ace-nav-link">Why Ace Online</a></li>
+      <li><a href="{% url 'classrooms:class_list' %}" class="ace-nav-link">Live Sessions</a></li>
+      <li><a href="{% url 'accounts:register_student' %}" class="ace-nav-link">Enroll Online</a></li>
+      <li class="ace-mobile-auth">
+        {% if user.is_authenticated %}
+          <a href="{% url 'dashboard_redirect' %}" class="btn-ace-primary" style="justify-content: center;">
+            My Dashboard &rarr;
+          </a>
+          <a href="{% url 'accounts:logout' %}" class="btn-ace-outline" style="text-align: center;">Logout</a>
+        {% else %}
+          <a href="{% url 'accounts:register_student' %}" class="btn-ace-primary" style="justify-content: center;">Enroll Free</a>
+          <a href="{% url 'accounts:login' %}" class="btn-ace-outline" style="text-align: center;">Student / Teacher Login</a>
+        {% endif %}
+      </li>
+    </ul>
+
+    <div class="ace-nav-right">
+      <div class="ace-nav-actions">
+        {% if user.is_authenticated %}
+          <a href="{% url 'dashboard_redirect' %}" class="btn-ace-primary">
+            My Dashboard &rarr;
+          </a>
+          <a href="{% url 'accounts:logout' %}" class="btn-ace-outline">Logout</a>
+        {% else %}
+          <a href="{% url 'accounts:login' %}" class="btn-ace-outline">Student / Teacher Login</a>
+          <a href="{% url 'accounts:register_student' %}" class="btn-ace-primary">Enroll Free</a>
+        {% endif %}
+      </div>
+
+      <!-- Mobile Hamburger Menu Button -->
+      <button class="ace-hamburger" id="aceHamburger" aria-label="Toggle navigation menu" aria-expanded="false" type="button">
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="ace-hero-section">
+    <div class="ace-hero-container">
+      
+      <!-- Left Hero Text -->
+      <div class="ace-hero-left">
+        <div class="ace-pill-badge">
+          <span>🏆</span>
+          <span>Premier Online Tuition Institution</span>
+        </div>
+
+        <h1 class="ace-hero-title">
+          Empowering Students To <span class="ace-highlight">Excel In Every Exam</span>
+        </h1>
+
+        <p class="ace-hero-subtitle">
+          Ace Online delivers specialized live interactive tuition via Google Meet, certified subject mentors, continuous attendance tracking, and transparent exam performance analytics.
+        </p>
+
+        <div class="ace-hero-cta">
+          <a href="{% url 'accounts:register_student' %}" class="btn-ace-primary" style="font-size: 1.05rem; padding: 0.85rem 2.2rem;">
+            🚀 Join as Student
+          </a>
+          <a href="{% url 'accounts:register_teacher' %}" class="btn-ace-outline" style="font-size: 1.05rem; padding: 0.8rem 1.8rem; border-color: var(--ace-primary); color: var(--ace-primary);">
+            👨‍🏫 Faculty Portal
+          </a>
+          <a href="{% url 'accounts:login' %}" class="btn-ace-outline" style="font-size: 1.05rem; padding: 0.8rem 1.5rem;">
+            Sign In
+          </a>
+        </div>
+
+        <div class="ace-hero-metrics">
+          <div>
+            <div class="ace-metric-num">{{ total_students|default:"120" }}+</div>
+            <div class="ace-metric-label">Enrolled Students</div>
+          </div>
+          <div>
+            <div class="ace-metric-num">{{ total_standards|default:"15" }}+</div>
+            <div class="ace-metric-label">Standards (1st-PG)</div>
+          </div>
+          <div>
+            <div class="ace-metric-num">{{ total_subjects|default:"50" }}+</div>
+            <div class="ace-metric-label">Tuition Subjects</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Hero Card: Demo Student Studying with Digital Gadget -->
+      <div>
+        <div class="ace-hero-card">
+          <!-- Demo Student Studying with Digital Gadget (Tablet & Stylus) -->
+          <div class="ace-student-image-container">
+            <img 
+              src="{% static 'images/student.png' %}" 
+              alt="Ace Online student studying" 
+              class="ace-student-showcase-img"
+            >
+            
+            <!-- Floating Live Status Overlay Pill -->
+            <div class="ace-showcase-live-pill">
+              <span class="ace-live-pulse"></span>
+              <span>Live Interactive Tuition</span>
+            </div>
+
+            <!-- Floating Badge: Top Right Rating -->
+            <div class="ace-floating-stat-badge top-right">
+              <span style="font-size: 1.05rem;">⭐</span>
+              <div>
+                <strong>4.9 / 5</strong>
+                <small>Student Rating</small>
+              </div>
+            </div>
+
+            <!-- Floating Badge: Bottom Left Feature Info -->
+            <div class="ace-floating-stat-badge bottom-left">
+              <span style="font-size: 1.15rem;">📱</span>
+              <div>
+                <strong>Digital Note-Taking &amp; Google Meet</strong>
+                <small>Interactive Tablet Learning &bull; Active Mentors</small>
+              </div>
+            </div>
+          </div>
+
+          <div style="font-size: 0.82rem; font-weight: 800; color: var(--ace-text-subtle); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.85rem;">
+            Standards &amp; Courses (1st Std to PG)
+          </div>
+
+          <div class="ace-batch-preview-list">
+            <div class="ace-batch-item">
+              <div>
+                <div class="ace-batch-title">Higher Secondary (Plus Two)</div>
+                <div class="ace-batch-sub">Physics, Chemistry, Maths &amp; Biology</div>
+              </div>
+              <span style="font-size: 0.75rem; font-weight: 800; color: #0284c7; background: #e0f2fe; padding: 0.25rem 0.6rem; border-radius: 9999px;">
+                Admissions Open
+              </span>
+            </div>
+
+            <div class="ace-batch-item">
+              <div>
+                <div class="ace-batch-title">High School (8th to 10th Standard)</div>
+                <div class="ace-batch-sub">Core Sciences, Mathematics, English</div>
+              </div>
+              <span style="font-size: 0.75rem; font-weight: 800; color: #0284c7; background: #e0f2fe; padding: 0.25rem 0.6rem; border-radius: 9999px;">
+                Admissions Open
+              </span>
+            </div>
+
+            <div class="ace-batch-item">
+              <div>
+                <div class="ace-batch-title">College &amp; Degree Programs (UG / PG)</div>
+                <div class="ace-batch-sub">B.Com, B.Sc, M.Com &amp; On-Demand Subjects</div>
+              </div>
+              <span style="font-size: 0.75rem; font-weight: 800; color: #059669; background: #ecfdf5; padding: 0.25rem 0.6rem; border-radius: 9999px;">
+                Specialized
+              </span>
+            </div>
+          </div>
+
+          <div style="margin-top: 1.25rem; text-align: center;">
+            <a href="{% url 'accounts:register_student' %}" style="color: var(--ace-primary); font-size: 0.88rem; font-weight: 700; text-decoration: none;">
+              Register &amp; Select Your Standard &rarr;
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Programs Section -->
+  <section class="ace-section" id="programs">
+    <div class="ace-section-header">
+      <div class="ace-pill-badge">Curriculum & Subjects</div>
+      <h2 class="ace-section-title">Specialized Tuition Programs</h2>
+      <p class="ace-section-subtitle">
+        Structured syllabus coverage, targeted exam practice, and concept-building led by senior educators.
+      </p>
+    </div>
+
+    <div class="ace-programs-grid">
+      <div class="ace-program-card">
+        <div>
+          <div class="ace-program-icon">📐</div>
+          <h3 class="ace-program-name">Pure & Applied Mathematics</h3>
+          <p class="ace-program-desc">
+            Algebra, Geometry, Trigonometry, Coordinate Geometry, and Calculus with step-by-step problem-solving worksheets.
+          </p>
+        </div>
+        <a href="{% url 'accounts:register_student' %}" class="btn-ace-outline btn-sm" style="align-self: flex-start;">
+          Enroll Now &rarr;
+        </a>
+      </div>
+
+      <div class="ace-program-card">
+        <div>
+          <div class="ace-program-icon" style="background: #ecfdf5; color: #059669;">⚡</div>
+          <h3 class="ace-program-name">Physics & Mechanics</h3>
+          <p class="ace-program-desc">
+            Conceptual derivations, kinematics, thermodynamics, electromagnetism, and exam numericals.
+          </p>
+        </div>
+        <a href="{% url 'accounts:register_student' %}" class="btn-ace-outline btn-sm" style="align-self: flex-start;">
+          Enroll Now &rarr;
+        </a>
+      </div>
+
+      <div class="ace-program-card">
+        <div>
+          <div class="ace-program-icon" style="background: #fffbeb; color: #d97706;">🧪</div>
+          <h3 class="ace-program-name">Chemistry Foundations</h3>
+          <p class="ace-program-desc">
+            Organic reaction mechanisms, atomic structures, stoichiometry, and periodic trends made clear and memorable.
+          </p>
+        </div>
+        <a href="{% url 'accounts:register_student' %}" class="btn-ace-outline btn-sm" style="align-self: flex-start;">
+          Enroll Now &rarr;
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Choose Ace Online (Pillars) -->
+  <section class="ace-section" id="features" style="background: #ffffff; border-top: 1px solid var(--ace-border); border-bottom: 1px solid var(--ace-border);">
+    <div class="ace-section-header">
+      <div class="ace-pill-badge">The Ace Online Advantage</div>
+      <h2 class="ace-section-title">Why Students & Parents Trust Us</h2>
+      <p class="ace-section-subtitle">
+        Modern technology combined with disciplined academic mentorship.
+      </p>
+    </div>
+
+    <div class="ace-pillars-grid">
+      <div class="ace-pillar-box">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🎥</div>
+        <h3 class="ace-pillar-title">Live Google Meet Integration</h3>
+        <p class="ace-pillar-desc">
+          High-definition interactive video classes where students can ask questions in real-time. Start and end timestamps are recorded automatically.
+        </p>
+      </div>
+
+      <div class="ace-pillar-box">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem;">✅</div>
+        <h3 class="ace-pillar-title">Automated Attendance Logging</h3>
+        <p class="ace-pillar-desc">
+          Attendance is automatically marked the moment students enter class, giving parents and tutors complete transparency.
+        </p>
+      </div>
+
+      <div class="ace-pillar-box">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📊</div>
+        <h3 class="ace-pillar-title">Continuous Exam Evaluation</h3>
+        <p class="ace-pillar-desc">
+          Weekly tests and unit exams graded promptly with transparent scorecards, class ranking, and teacher feedback.
+        </p>
+      </div>
+
+      <div class="ace-pillar-box">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📱</div>
+        <h3 class="ace-pillar-title">Dedicated Student & Teacher Portals</h3>
+        <p class="ace-pillar-desc">
+          Mobile-optimized portals with one-click access to upcoming sessions, attendance rates, and progress logs.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Banner -->
+  <section class="ace-section" style="padding-top: 2rem;">
+    <div class="ace-cta-banner">
+      <h2>Start Your Learning Journey with Ace Online</h2>
+      <p>
+        Enroll in your preferred standard and subjects today and experience premier live tuition designed for top academic results.
+      </p>
+      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <a href="{% url 'accounts:register_student' %}" class="btn-ace-primary" style="font-size: 1.05rem; padding: 0.85rem 2.2rem; background: var(--ace-accent-gradient);">
+          Enroll Free Today
+        </a>
+        <a href="{% url 'accounts:login' %}" class="btn-ace-outline" style="border-color: rgba(255, 255, 255, 0.3); color: #fff;">
+          Sign In to Portal
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="ace-footer">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 1.5rem;">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <div class="ace-logo-badge" style="width: 32px; height: 32px; font-size: 1rem;">⚡</div>
+        <strong style="font-size: 1.15rem; color: var(--ace-text-main);">Ace Online</strong>
+      </div>
+      <div style="display: flex; gap: 1.5rem; font-size: 0.88rem;">
+        <a href="{% url 'classrooms:class_list' %}" style="color: var(--ace-text-muted); text-decoration: none;">Live Classes</a>
+        <a href="{% url 'accounts:register_student' %}" style="color: var(--ace-text-muted); text-decoration: none;">Register Online</a>
+        <a href="{% url 'accounts:login' %}" style="color: var(--ace-text-muted); text-decoration: none;">Portal Login</a>
+      </div>
+    </div>
+    <p>&copy; 2026 Ace Online Tuition Institution. All rights reserved.</p>
+  </footer>
+
+  <script>
+    (function() {
+      const hamburger = document.getElementById('aceHamburger');
+      const menu = document.getElementById('aceNavMenu');
+
+      if (!hamburger || !menu) return;
+
+      function toggleMenu(forceState) {
+        const isOpen = forceState !== undefined ? forceState : !menu.classList.contains('is-open');
+        hamburger.classList.toggle('is-active', isOpen);
+        menu.classList.toggle('is-open', isOpen);
+        hamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      }
+
+      hamburger.addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleMenu();
+      });
+
+      // Close menu when clicking any nav link
+      menu.querySelectorAll('a').forEach(function(link) {
+        link.addEventListener('click', function() {
+          toggleMenu(false);
+        });
+      });
+
+      // Close menu on click outside
+      document.addEventListener('click', function(e) {
+        if (menu.classList.contains('is-open') && !menu.contains(e.target) && !hamburger.contains(e.target)) {
+          toggleMenu(false);
+        }
+      });
+
+      // Close menu on Escape key
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && menu.classList.contains('is-open')) {
+          toggleMenu(false);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

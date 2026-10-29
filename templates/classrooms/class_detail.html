@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ class.title }} | Live Class Details{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+  <a href="{% url 'classrooms:class_list' %}" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem;">
+    &larr; Back to Classes
+  </a>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+        <h1 style="font-size: 1.6rem; font-weight: 800; color: #fff;">{{ class.title }}</h1>
+        <span id="status-badge-{{ class.id }}">
+          {% if class.status == 'LIVE' %}
+            <span class="signal-red-live">
+              <span class="bullet-red-blink"></span>
+              <span>Live Now</span>
+              <span class="live-timer-badge" data-start="{{ class.actual_start_time.isoformat }}">{{ class.duration_minutes }}m</span>
+            </span>
+          {% elif class.status == 'COMPLETED' %}
+            <span class="badge-completed">Completed</span>
+          {% else %}
+            <span class="badge-scheduled">
+              <span class="bullet-yellow-blink"></span>
+              <span>Scheduled</span>
+            </span>
+          {% endif %}
+        </span>
+      </div>
+
+      <div style="font-size: 0.92rem; color: var(--text-muted); display: flex; gap: 1.5rem; flex-wrap: wrap;">
+        <span>📚 Subject: <strong style="color: #38bdf8;">{{ class.subject.standard.name }}</strong> &bull; <strong style="color: #cbd5e1;">{{ class.subject.name }}</strong></span>
+        <span>👨‍🏫 Teacher: <strong style="color: #cbd5e1;">{{ class.teacher.get_full_name|default:class.teacher.username|default:"Unassigned Faculty" }}</strong></span>
+        <span>📅 Scheduled: {{ class.scheduled_start|date:"M d, Y, g:i A" }}</span>
+      </div>
+
+      {% if class.description %}
+        <p style="margin-top: 1rem; color: #94a3b8; font-size: 0.9rem;">{{ class.description }}</p>
+      {% endif %}
+    </div>
+
+    <!-- Quick Action / Controls -->
+    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.75rem;">
+      {% if user.is_student %}
+        {% if user_has_attended %}
+          <a href="{{ class.meet_link }}" target="_blank" class="btn btn-outline" style="color: #34d399; border-color: rgba(16, 185, 129, 0.4);">
+            ✅ Attendance Recorded &bull; Enter Meet ↗
+          </a>
+        {% else %}
+          <button class="btn btn-meet" onclick="joinClassWithAttendance({{ class.id }}, '{{ class.meet_link }}', this)">
+            🎥 Join Google Meet (Logs Attendance)
+          </button>
+        {% endif %}
+      {% endif %}
+
+      {% if user == class.teacher or user.is_admin_user %}
+        <div style="display: flex; gap: 0.5rem;">
+          {% if class.status == 'SCHEDULED' %}
+            <button class="btn btn-success" onclick="startLiveClass({{ class.id }}, this)">
+              ▶️ Start Class (Record Time)
+            </button>
+          {% elif class.status == 'LIVE' %}
+            <button class="btn btn-danger" onclick="endLiveClass({{ class.id }}, this)">
+              🛑 End Class (Record End Time)
+            </button>
+          {% endif %}
+          <a href="{{ class.meet_link }}" target="_blank" class="btn btn-outline">
+            Launch Meet ↗
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.88rem; color: var(--text-muted);">
+    <div>Started Time: <strong id="time-started-{{ class.id }}" style="color: #fff;">{{ class.actual_start_time|date:"g:i:s A, M d, Y"|default:"Not yet" }}</strong></div>
+    <div>Ended Time: <strong id="time-ended-{{ class.id }}" style="color: #fff;">{{ class.actual_end_time|date:"g:i:s A, M d, Y"|default:"Not yet" }}</strong></div>
+    <div>Total Duration: <strong style="color: #38bdf8;">{{ class.duration_minutes|default:"0" }} minutes</strong></div>
+    <div>Total Attendees: <strong id="attendee-count-badge" style="color: #34d399;">{{ attendances.count }}</strong></div>
+  </div>
+</div>
+
+<!-- Attendees Table -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <span>👥</span>
+      <span>Class Attendance Sheet</span>
+      <span class="pulse-badge" id="live-count-badge">{{ attendances.count }} Present</span>
+    </div>
+    {% if user.is_teacher or user.is_admin_user %}
+    <button class="btn btn-outline btn-sm" onclick="refreshAttendees({{ class.id }})">
+      🔄 Refresh Attendees
+    </button>
+    {% endif %}
+  </div>
+
+  <div class="table-responsive">
+    <table class="table" id="attendees-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Student Name</th>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Time Joined</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="attendees-tbody">
+        {% for a in attendances %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td style="font-weight: 600;">{{ a.student.get_full_name|default:a.student.username }}</td>
+          <td><code>@{{ a.student.username }}</code></td>
+          <td>{{ a.student.email|default:"-" }}</td>
+          <td>{{ a.joined_at|date:"h:i:s A" }}</td>
+          <td><span class="pulse-badge">Present</span></td>
+        </tr>
+        {% empty %}
+        <tr id="no-attendees-row">
+          <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+            No students have joined this session yet.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function refreshAttendees(classId) {
+  try {
+    const res = await fetch(`/classes/${classId}/ajax/attendees/`);
+    const data = await res.json();
+    if (data.success) {
+      const tbody = document.getElementById('attendees-tbody');
+      const badge = document.getElementById('live-count-badge');
+      const countEl = document.getElementById('attendee-count-badge');
+
+      if (badge) badge.textContent = `${data.count} Present`;
+      if (countEl) countEl.textContent = data.count;
+
+      if (data.attendees.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No students have joined yet.</td></tr>`;
+      } else {
+        tbody.innerHTML = data.attendees.map((att, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td style="font-weight: 600;">${att.full_name}</td>
+            <td><code>@${att.username}</code></td>
+            <td>${att.email}</td>
+            <td>${att.joined_at}</td>
+            <td><span class="pulse-badge">Present</span></td>
+          </tr>
+        `).join('');
+      }
+      showToast(`Updated attendance: ${data.count} attendees`, 'info');
+    }
+  } catch (e) {
+    showToast('Failed to refresh attendee list.', 'error');
+  }
+}
+</script>
+{% endblock %}

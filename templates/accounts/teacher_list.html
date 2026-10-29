@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+
+{% block title %}Teacher Faculty Directory | Ace Online{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+      <a href="{% url 'dashboards:admin_dashboard' %}" style="color: var(--text-muted); text-decoration: none; font-size: 0.88rem;">&larr; Admin Dashboard</a>
+    </div>
+    <h1 style="font-size: 1.85rem; font-weight: 800; color: #fff; margin: 0 0 0.25rem 0;">Teacher Faculty Management</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">Certified mentors, subject specializations, qualifications, and cohort assignments</p>
+  </div>
+  <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+    <a href="{% url 'accounts:teacher_create' %}" class="btn btn-primary">
+      ➕ Register New Teacher
+    </a>
+  </div>
+</div>
+
+<!-- Teacher Stats Grid (4 in a row on mobile / desktop) -->
+<div class="stats-grid admin-stats-grid" style="margin-bottom: 1.75rem;">
+  <div class="stat-card">
+    <div class="stat-label">Total Faculty</div>
+    <div class="stat-value">{{ all_teachers_count }}</div>
+  </div>
+  <div class="stat-card stat-success">
+    <div class="stat-label">Active Mentors</div>
+    <div class="stat-value">{{ active_teachers_count }}</div>
+  </div>
+  <div class="stat-card stat-warning">
+    <div class="stat-label">Inactive / On-Leave</div>
+    <div class="stat-value">{{ inactive_teachers_count }}</div>
+  </div>
+  <div class="stat-card stat-info">
+    <div class="stat-label">Filtered Results</div>
+    <div class="stat-value">{{ teachers|length }}</div>
+  </div>
+</div>
+
+<!-- Search & Status Filter Bar -->
+<div class="card" style="padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
+  <form method="get" style="display: flex; gap: 0.85rem; align-items: center; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 240px;">
+      <input 
+        type="search" 
+        name="q" 
+        value="{{ q }}" 
+        class="form-input" 
+        placeholder="🔍 Search teachers by name, username, email, or subject specialization..."
+        style="width: 100%; margin: 0;"
+      >
+    </div>
+    <div style="min-width: 160px;">
+      <select name="status" class="form-select" style="margin: 0;">
+        <option value="all" {% if status == 'all' %}selected{% endif %}>All Statuses</option>
+        <option value="active" {% if status == 'active' %}selected{% endif %}>Active Only</option>
+        <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive Only</option>
+      </select>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+      {% if q or status != 'all' %}
+        <a href="{% url 'accounts:teacher_list' %}" class="btn btn-outline btn-sm">Clear</a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Teachers Table -->
+<div class="card" style="padding: 0; overflow: hidden;">
+  <div class="table-responsive" style="border: none; border-radius: 0;">
+    <table class="table" style="margin: 0;">
+      <thead>
+        <tr>
+          <th>Teacher</th>
+          <th>Contact Info</th>
+          <th>Specialization &amp; Qualification</th>
+          <th>Assigned Subjects &amp; Classes</th>
+          <th>Status</th>
+          <th style="text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in teachers %}
+        <tr>
+          <!-- Teacher Name & Info -->
+          <td>
+            <div style="display: flex; align-items: center; gap: 0.85rem;">
+              <div style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; font-weight: 800; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);">
+                {{ t.first_name|first|default:t.username|first|upper }}
+              </div>
+              <div>
+                <div style="font-weight: 700; color: #fff; font-size: 0.95rem;">
+                  {{ t.get_full_name|default:t.username }}
+                </div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">
+                  <code>@{{ t.username }}</code> &bull; Joined {{ t.date_joined|date:"M Y" }}
+                </div>
+              </div>
+            </div>
+          </td>
+
+          <!-- Contact Info -->
+          <td>
+            <div style="font-size: 0.88rem; color: #fff;">{{ t.email|default:"-" }}</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">📞 {{ t.phone|default:"No phone" }}</div>
+          </td>
+
+          <!-- Specialization & Qualification -->
+          <td>
+            <div style="font-weight: 600; color: #38bdf8; font-size: 0.88rem;">
+              {{ t.teacher_profile.subject_specialization|default:"General Academics" }}
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">
+              🎓 {{ t.teacher_profile.qualification|default:"Not specified" }}
+            </div>
+          </td>
+
+          <!-- Assigned Subjects & Classes -->
+          <td>
+            {% with subjects=t.assigned_subjects.all %}
+              {% if subjects %}
+                <span class="pulse-badge" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; margin-bottom: 0.3rem;">
+                  {{ subjects.count }} Subjects
+                </span>
+                <div style="font-size: 0.76rem; color: var(--text-subtle); max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  {% for s in subjects|slice:":2" %}
+                    {{ s.standard.name }} - {{ s.name }}{% if not forloop.last %}, {% endif %}
+                  {% endfor %}
+                  {% if subjects.count > 2 %} +{{ subjects.count|add:"-2" }} more{% endif %}
+                </div>
+              {% else %}
+                <span style="font-size: 0.8rem; color: var(--text-subtle);">None assigned</span>
+              {% endif %}
+            {% endwith %}
+          </td>
+
+          <!-- Status -->
+          <td>
+            {% if t.is_active %}
+              <a href="{% url 'accounts:teacher_toggle_status' t.id %}" 
+                 title="Click to deactivate" 
+                 style="text-decoration: none;"
+                 onclick="return confirm('Deactivate {{ t.username }}?');">
+                <span class="pulse-badge" style="cursor: pointer;">
+                  <span class="pulse-dot"></span> Active
+                </span>
+              </a>
+            {% else %}
+              <a href="{% url 'accounts:teacher_toggle_status' t.id %}" 
+                 title="Click to activate" 
+                 style="text-decoration: none;"
+                 onclick="return confirm('Activate {{ t.username }}?');">
+                <span class="badge-completed" style="cursor: pointer; background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.3);">
+                  Inactive
+                </span>
+              </a>
+            {% endif %}
+          </td>
+
+          <!-- Actions -->
+          <td style="text-align: right;">
+            <div style="display: inline-flex; gap: 0.4rem;">
+              <a href="{% url 'accounts:teacher_edit' t.id %}" class="btn btn-outline btn-sm" title="Edit Teacher">
+                ✏️ Edit
+              </a>
+              <a href="{% url 'accounts:teacher_delete' t.id %}" class="btn btn-outline btn-sm" style="color: #f87171; border-color: rgba(239, 68, 68, 0.3);" title="Delete Teacher">
+                🗑️
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 3.5rem 1.5rem;">
+            <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">👨‍🏫</div>
+            <p style="font-size: 1.1rem; color: #fff; font-weight: 700; margin-bottom: 0.25rem;">No Teachers Found</p>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+              {% if q %}No faculty match your search query "{{ q }}".{% else %}There are currently no registered teachers in the platform.{% endif %}
+            </p>
+            <a href="{% url 'accounts:teacher_create' %}" class="btn btn-primary btn-sm">
+              ➕ Register New Teacher
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

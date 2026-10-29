@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Overview Dashboard | Ace Online{% endblock %}
+
+{% block content %}
+<div class="admin-header-flex" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+  <div>
+    <h1 style="font-size: 1.8rem; font-weight: 800; color: #fff; margin: 0 0 0.25rem 0;">System Administration</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">Tuition classes (1st Std - PG), faculty mentors, live sessions, and on-demand subjects</p>
+  </div>
+  <div>
+    <a href="{% url 'classrooms:class_list' %}" class="btn btn-primary btn-sm">
+      🎥 Live Classes
+      {% if live_classes_now %}
+        <span class="pulse-badge" style="background: rgba(16, 185, 129, 0.25); color: #34d399; font-size: 0.75rem; margin-left: 0.35rem; padding: 0.15rem 0.45rem;">
+          {{ live_classes_now.count }} Live Now
+        </span>
+      {% endif %}
+    </a>
+  </div>
+</div>
+
+<!-- 4 CRUD Cards in a Row on Mobile & All Devices: Standards, Students, Subjects, Faculty CRUD -->
+<div class="stats-grid admin-stats-grid">
+  <!-- 1. Standards -->
+  <a href="{% url 'academics:standard_list' %}" class="stat-card stat-warning stat-card-link" title="Click to manage Class Standards">
+    <div class="stat-label">
+      <span class="stat-icon">🎓</span>
+      <span>Standards</span>
+      <span class="stat-arrow">&rarr;</span>
+    </div>
+    <div class="stat-value">{{ total_standards }}</div>
+  </a>
+
+  <!-- 2. Students -->
+  <a href="{% url 'accounts:student_list' %}" class="stat-card stat-card-link" title="Click to manage enrolled Students">
+    <div class="stat-label">
+      <span class="stat-icon">🎒</span>
+      <span>Students</span>
+      <span class="stat-arrow">&rarr;</span>
+    </div>
+    <div class="stat-value">{{ total_students }}</div>
+  </a>
+
+  <!-- 3. Subjects -->
+  <a href="{% url 'academics:subject_list' %}" class="stat-card stat-info stat-card-link" title="Click to manage Curriculum Subjects">
+    <div class="stat-label">
+      <span class="stat-icon">📚</span>
+      <span>Subjects</span>
+      <span class="stat-arrow">&rarr;</span>
+    </div>
+    <div class="stat-value">{{ total_subjects }}</div>
+  </a>
+
+  <!-- 4. Faculty CRUD -->
+  <a href="{% url 'accounts:teacher_list' %}" class="stat-card stat-success stat-card-link" title="Click to manage Faculty Mentors">
+    <div class="stat-label">
+      <span class="stat-icon">👨‍🏫</span>
+      <span>Faculty CRUD</span>
+      <span class="stat-arrow">&rarr;</span>
+    </div>
+    <div class="stat-value">{{ total_teachers }}</div>
+  </a>
+</div>
+
+<!-- Quick Toggle Bar for All Tables (Collapsed on All Devices by Default) -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+  <div style="display: flex; align-items: center; gap: 0.5rem;">
+    <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+      Data Tables &amp; Logs
+    </span>
+    <span style="font-size: 0.72rem; color: var(--text-subtle);">(Collapsed by default &bull; Click any header to expand)</span>
+  </div>
+  <div style="display: flex; gap: 0.4rem;">
+    <button type="button" class="btn btn-outline btn-sm" onclick="toggleAllTables(true)">
+      <span>⊞</span> Expand All
+    </button>
+    <button type="button" class="btn btn-outline btn-sm" onclick="toggleAllTables(false)">
+      <span>⊟</span> Collapse All
+    </button>
+  </div>
+</div>
+
+<!-- Live Classes in Progress Alert/Table (Collapsed by Default) -->
+{% if live_classes_now %}
+<div class="card collapsible-card collapsed" id="collapse-live-classes" style="margin-bottom: 1.5rem; border-color: rgba(16, 185, 129, 0.4);">
+  <div class="card-header collapsible-header" onclick="toggleCollapsible('collapse-live-classes')">
+    <div class="card-title">
+      <span class="pulse-badge"><span class="pulse-dot"></span> Live Classes In Progress</span>
+      <span class="badge-pill-counter">{{ live_classes_now.count }} active</span>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-collapse-toggle" aria-label="Toggle section">
+        <span class="chevron-arrow">▼</span>
+      </button>
+    </div>
+  </div>
+  <div class="collapsible-body" style="display: none;">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Class Topic</th>
+            <th>Standard &amp; Subject</th>
+            <th>Teacher</th>
+            <th>Started At</th>
+            <th>Attendees</th>
+            <th>Google Meet Link</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lc in live_classes_now %}
+          <tr>
+            <td style="font-weight: 700;">{{ lc.title }}</td>
+            <td>
+              <span style="font-weight: 700; color: #38bdf8;">{{ lc.subject.standard.name }}</span> &bull; {{ lc.subject.name }}
+            </td>
+            <td>{{ lc.teacher.get_full_name|default:lc.teacher.username }}</td>
+            <td>{{ lc.actual_start_time|date:"g:i A" }}</td>
+            <td><span class="pulse-badge">{{ lc.attendee_count }} Students</span></td>
+            <td>
+              <a href="{{ lc.meet_link }}" target="_blank" class="btn btn-outline btn-sm" style="color: #34d399; border-color: rgba(16, 185, 129, 0.4);">
+                Join / Inspect Meet ↗
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Two-column Section: Recent Classes & Recent Exams (Collapsed by Default) -->
+<div class="admin-tables-split-grid">
+  
+  <!-- Recent Classes Conducted -->
+  <div class="card collapsible-card collapsed" id="collapse-class-logs">
+    <div class="card-header collapsible-header" onclick="toggleCollapsible('collapse-class-logs')">
+      <div class="card-title">
+        <span>🎥 Live Class Logs</span>
+        <span class="badge-pill-counter">{{ recent_classes|length }} classes</span>
+      </div>
+      <div class="header-actions" onclick="event.stopPropagation()">
+        <a href="{% url 'classrooms:class_list' %}" class="btn btn-outline btn-sm">View All</a>
+        <button type="button" class="btn-collapse-toggle" onclick="toggleCollapsible('collapse-class-logs'); event.stopPropagation();" aria-label="Toggle section">
+          <span class="chevron-arrow">▼</span>
+        </button>
+      </div>
+    </div>
+    <div class="collapsible-body" style="display: none;">
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Class</th>
+              <th>Standard &amp; Subject</th>
+              <th>Schedule Time</th>
+              <th>Status</th>
+              <th>Duration</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in recent_classes %}
+            <tr>
+              <td>
+                <a href="{% url 'classrooms:class_detail' c.id %}" style="color: #fff; font-weight: 600; text-decoration: none;">
+                  {{ c.title }}
+                </a>
+              </td>
+              <td><span style="font-size: 0.82rem; color: var(--text-muted);"><strong style="color: #38bdf8;">{{ c.subject.standard.name }}</strong> &bull; {{ c.subject.name }}</span></td>
+              <td><span style="font-size: 0.82rem; color: #cbd5e1; white-space: nowrap;">{{ c.scheduled_start|date:"M d, g:i A" }}</span></td>
+              <td>
+                {% if c.status == 'LIVE' %}
+                  <span class="pulse-badge"><span class="pulse-dot"></span> Live</span>
+                {% elif c.status == 'COMPLETED' %}
+                  <span class="badge-completed">Completed</span>
+                {% else %}
+                  <span class="badge-scheduled">Scheduled</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if c.duration_minutes %}
+                  {{ c.duration_minutes }}m
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" style="text-align: center; color: var(--text-muted);">No classes scheduled yet.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Exams & Assessment Records -->
+  <div class="card collapsible-card collapsed" id="collapse-exam-records">
+    <div class="card-header collapsible-header" onclick="toggleCollapsible('collapse-exam-records')">
+      <div class="card-title">
+        <span>📝 Exam Records</span>
+        <span class="badge-pill-counter">{{ recent_exams|length }} exams</span>
+      </div>
+      <div class="header-actions" onclick="event.stopPropagation()">
+        <a href="{% url 'exams:exam_list' %}" class="btn btn-outline btn-sm">All Exams</a>
+        <button type="button" class="btn-collapse-toggle" onclick="toggleCollapsible('collapse-exam-records'); event.stopPropagation();" aria-label="Toggle section">
+          <span class="chevron-arrow">▼</span>
+        </button>
+      </div>
+    </div>
+    <div class="collapsible-body" style="display: none;">
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Exam Title</th>
+              <th>Standard &amp; Subject</th>
+              <th>Date</th>
+              <th>Avg Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ex in recent_exams %}
+            <tr>
+              <td>
+                <a href="{% url 'exams:marks_entry' ex.id %}" style="color: #fff; font-weight: 600; text-decoration: none;">
+                  {{ ex.title }}
+                </a>
+              </td>
+              <td><span style="color: #38bdf8; font-size: 0.82rem; font-weight: 600;">{{ ex.subject.standard.name }}</span> &bull; {{ ex.subject.name }}</td>
+              <td>{{ ex.exam_date|date:"M d, Y" }}</td>
+              <td style="font-weight: 700; color: #38bdf8;">{{ ex.average_score }} / {{ ex.total_marks }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" style="text-align: center; color: var(--text-muted);">No exams created yet.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Student Signups (Collapsed by Default) -->
+<div class="card collapsible-card collapsed" id="collapse-recent-students" style="margin-top: 1.5rem;">
+  <div class="card-header collapsible-header" onclick="toggleCollapsible('collapse-recent-students')">
+    <div class="card-title">
+      <span>👥 Newly Registered Students</span>
+      <span class="badge-pill-counter">{{ recent_students|length }} students</span>
+    </div>
+    <div class="header-actions" onclick="event.stopPropagation()">
+      <a href="{% url 'accounts:student_list' %}" class="btn btn-outline btn-sm">View All Students &rarr;</a>
+      <button type="button" class="btn-collapse-toggle" onclick="toggleCollapsible('collapse-recent-students'); event.stopPropagation();" aria-label="Toggle section">
+        <span class="chevron-arrow">▼</span>
+      </button>
+    </div>
+  </div>
+  <div class="collapsible-body" style="display: none;">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Student Name</th>
+            <th>Username</th>
+            <th>Standard / Class</th>
+            <th>Parent Contact</th>
+            <th>Joined Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in recent_students %}
+          <tr>
+            <td style="font-weight: 600;">{{ s.get_full_name|default:s.username }}</td>
+            <td><code>@{{ s.username }}</code></td>
+            <td>
+              {% if s.student_profile.standard %}
+                <span class="role-badge role-TEACHER" style="font-size: 0.72rem;">{{ s.student_profile.standard.name }}</span>
+              {% else %}
+                <span style="color: var(--text-muted); font-size: 0.8rem;">{{ s.student_profile.grade_level|default:"-" }}</span>
+              {% endif %}
+            </td>
+            <td>{{ s.student_profile.parent_phone|default:"-" }}</td>
+            <td>{{ s.date_joined|date:"M d, Y" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-muted);">No student registrations found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function toggleCollapsible(cardId) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+    const isCollapsed = card.classList.contains('collapsed');
+    const body = card.querySelector('.collapsible-body');
+    
+    if (isCollapsed) {
+      card.classList.remove('collapsed');
+      if (body) body.style.display = 'block';
+    } else {
+      card.classList.add('collapsed');
+      if (body) body.style.display = 'none';
+    }
+  }
+
+  function toggleAllTables(expand) {
+    const cards = document.querySelectorAll('.collapsible-card');
+    cards.forEach(card => {
+      const body = card.querySelector('.collapsible-body');
+      if (expand) {
+        card.classList.remove('collapsed');
+        if (body) body.style.display = 'block';
+      } else {
+        card.classList.add('collapsed');
+        if (body) body.style.display = 'none';
+      }
+    });
+  }
+</script>
+{% endblock %}

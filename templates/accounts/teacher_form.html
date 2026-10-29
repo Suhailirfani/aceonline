@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }} | Ace Online{% endblock %}
+
+{% block content %}
+<div style="max-width: 720px; margin: 1.5rem auto 3rem;">
+  
+  <!-- Breadcrumb navigation -->
+  <div style="margin-bottom: 1.25rem;">
+    <a href="{% url 'accounts:teacher_list' %}" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+      &larr; Back to Faculty List
+    </a>
+  </div>
+
+  <div class="card" style="padding: 2.25rem;">
+    
+    <!-- Card Header -->
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.75rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border-color);">
+      <div class="brand-icon" style="background: linear-gradient(135deg, #0284c7, #0369a1); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; color: #fff;">
+        👨‍🏫
+      </div>
+      <div>
+        <h1 style="font-size: 1.5rem; font-weight: 800; color: #fff; margin: 0 0 0.2rem 0;">{{ page_title }}</h1>
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">Configure certified tutor credentials, credentials, and teaching domains</p>
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div class="toast toast-error" style="width: 100%; margin-bottom: 1.25rem;">
+        {% for error in form.non_field_errors %}
+          <div>{{ error }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Name Row -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">First Name *</label>
+          {{ form.first_name }}
+          {% if form.first_name.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.first_name.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name *</label>
+          {{ form.last_name }}
+          {% if form.last_name.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.last_name.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+
+      <!-- Username & Email Row -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        {% if form.username %}
+        <div class="form-group">
+          <label class="form-label">Username *</label>
+          {{ form.username }}
+          {% if form.username.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.username.errors.0 }}</div>{% endif %}
+          <small style="font-size: 0.74rem; color: var(--text-subtle);">Used by the teacher to log into the portal</small>
+        </div>
+        {% else %}
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" class="form-input" value="{{ teacher.username }}" disabled style="opacity: 0.7; cursor: not-allowed;">
+          <small style="font-size: 0.74rem; color: var(--text-subtle);">Usernames cannot be changed</small>
+        </div>
+        {% endif %}
+        
+        <div class="form-group">
+          <label class="form-label">Email Address *</label>
+          {{ form.email }}
+          {% if form.email.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.email.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+
+      <!-- Phone & Qualification -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          {{ form.phone }}
+          {% if form.phone.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.phone.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Highest Qualification *</label>
+          {{ form.qualification }}
+          {% if form.qualification.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.qualification.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+
+      <!-- Subject Specialization -->
+      <div class="form-group">
+        <label class="form-label">Subject Specialization *</label>
+        {{ form.subject_specialization }}
+        {% if form.subject_specialization.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.subject_specialization.errors.0 }}</div>{% endif %}
+        <small style="font-size: 0.74rem; color: var(--text-subtle);">e.g. Pure Mathematics, Organic Chemistry, Mechanics &amp; Modern Physics</small>
+      </div>
+
+      <!-- Password fields (if create) -->
+      {% if form.password1 %}
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          {{ form.password1 }}
+          {% if form.password1.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.password1.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm Password *</label>
+          {{ form.password2 }}
+          {% if form.password2.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.password2.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Password reset field (if edit) -->
+      {% if form.new_password %}
+      <div class="form-group">
+        <label class="form-label">Reset Password (Optional)</label>
+        {{ form.new_password }}
+        {% if form.new_password.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.new_password.errors.0 }}</div>{% endif %}
+        <small style="font-size: 0.74rem; color: var(--text-subtle);">Leave blank to keep the teacher's current password unchanged</small>
+      </div>
+      {% endif %}
+
+      <!-- Bio / Background -->
+      <div class="form-group">
+        <label class="form-label">Biography &amp; Teaching Experience</label>
+        {{ form.bio }}
+        {% if form.bio.errors %}<div style="color: #f87171; font-size: 0.8rem; margin-top: 0.25rem;">{{ form.bio.errors.0 }}</div>{% endif %}
+      </div>
+
+      <!-- Status Checkbox -->
+      <div class="form-group" style="display: flex; align-items: center; gap: 0.65rem; background: var(--bg-card-subtle); padding: 0.85rem 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+        {{ form.is_active }}
+        <label for="{{ form.is_active.id_for_label }}" style="font-weight: 600; font-size: 0.92rem; color: #fff; cursor: pointer; margin: 0;">
+          Active Status (Teacher is eligible to log in and teach assigned subjects)
+        </label>
+      </div>
+
+      <!-- Form Actions -->
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color);">
+        <a href="{% url 'accounts:teacher_list' %}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-primary">{{ btn_text }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

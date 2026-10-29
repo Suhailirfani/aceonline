@@ -1,0 +1,339 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Dashboard | Ace Online{% endblock %}
+
+{% block content %}
+<!-- ============================================================== -->
+<!-- DESKTOP VIEW: Minimal Header, Left Half 4 Stats, Right Half Live -->
+<!-- ============================================================== -->
+<div class="desktop-only-view">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+    <div>
+      <h1 style="font-size: 1.45rem; font-weight: 800; color: #fff; letter-spacing: -0.3px;">Student Dashboard</h1>
+      <p style="color: var(--text-muted); font-size: 0.85rem;">Welcome, {{ user.first_name|default:user.username }} &bull; {{ user.student_profile.grade_level|default:"Grade 10" }} &bull; Ace Online</p>
+    </div>
+    <a href="{% url 'classrooms:class_list' %}" class="btn btn-outline btn-sm">Full Schedule &rarr;</a>
+  </div>
+
+  <div class="student-top-grid">
+    <!-- LEFT HALF: 4 STATS IN A ROW (COMPUTER) -->
+    <div class="student-stats-row">
+      <!-- Stat 1: Subjects -->
+      <div class="mini-stat-card stat-accent-batches">
+        <span class="stat-label">Subjects</span>
+        <span class="stat-value">{{ enrolled_subjects|length }}</span>
+      </div>
+
+      <!-- Stat 2: Attended -->
+      <div class="mini-stat-card stat-accent-attended">
+        <span class="stat-label">Attended</span>
+        <span class="stat-value" style="color: #34d399;">{{ attended_count }}</span>
+      </div>
+
+      <!-- Stat 3: Total Held -->
+      <div class="mini-stat-card stat-accent-held">
+        <span class="stat-label">Held</span>
+        <span class="stat-value">{{ total_classes_conducted }}</span>
+      </div>
+
+      <!-- Stat 4: Attendance Rate -->
+      <div class="mini-stat-card stat-accent-rate">
+        <span class="stat-label">Rate</span>
+        <span class="stat-value" style="color: #fbbf24;">{{ attendance_pct }}%</span>
+      </div>
+    </div>
+
+    <!-- RIGHT HALF: SMALL LIVE CLASS CARD (COMPUTER) -->
+    <div>
+      {% if live_classes_now %}
+        {% for lc in live_classes_now %}
+        <div class="live-class-mini-card">
+          <div class="live-class-mini-content">
+            <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem;">
+              <span class="signal-red-live" style="padding: 0.15rem 0.5rem; font-size: 0.68rem;">
+                <span class="bullet-red-blink"></span>
+                <span>Live Now</span>
+              </span>
+              <span class="live-timer-badge" data-start="{{ lc.actual_start_time.isoformat }}">{{ lc.duration_minutes }}m</span>
+              <span style="font-size: 0.72rem; color: var(--text-subtle);">&bull; Started {{ lc.actual_start_time|date:"g:i A" }}</span>
+            </div>
+            <div class="live-class-mini-title" title="{{ lc.title }}">{{ lc.title }}</div>
+            <div class="live-class-mini-sub">
+              {% if lc.subject %}{{ lc.subject.standard.name }} &bull; {{ lc.subject.name }}{% else %}{{ lc.batch.name }}{% endif %}
+              &bull; {{ lc.teacher.get_full_name|default:lc.teacher.username }}
+            </div>
+          </div>
+
+          <button 
+            class="btn-meet-mini" 
+            onclick="joinClassWithAttendance({{ lc.id }}, '{{ lc.meet_link }}', this)">
+            🎥 Join Meet
+          </button>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="live-class-mini-card no-live">
+          <div class="live-class-mini-content">
+            <div style="display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.15rem;">
+              <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">📅 Next Class</span>
+            </div>
+            {% if upcoming_classes %}
+              {% with next_c=upcoming_classes.0 %}
+                <div class="live-class-mini-title">{{ next_c.title }}</div>
+                <div class="live-class-mini-sub">
+                  {{ next_c.scheduled_start|date:"M d, g:i A" }} &bull; 
+                  {% if next_c.subject %}{{ next_c.subject.standard.name }} - {{ next_c.subject.name }}{% else %}{{ next_c.batch.name }}{% endif %}
+                </div>
+              {% endwith %}
+            {% else %}
+              <div class="live-class-mini-title" style="color: var(--text-muted);">No live classes right now</div>
+              <div class="live-class-mini-sub">You are all caught up! Check back when your next session starts.</div>
+            {% endif %}
+          </div>
+          <a href="{% url 'classrooms:class_list' %}" class="btn btn-outline btn-sm" style="font-size: 0.78rem; padding: 0.35rem 0.65rem;">
+            View All
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- MOBILE APP VIEWPORT (DRIBBBLE TUITION-TRACKING DESIGN <= 768px)  -->
+<!-- ============================================================== -->
+<div class="mobile-app-view">
+  <!-- Mobile User Header: Avatar, Name, Bell -->
+  <div class="mobile-user-header">
+    <div class="mobile-user-info">
+      <div class="mobile-user-avatar">
+        {{ user.first_name|first|default:user.username|first|upper }}
+      </div>
+      <div>
+        <div class="mobile-user-greeting">Hello, {{ user.first_name|default:user.username }} 👋</div>
+        <div class="mobile-user-sub">{{ student_standard.name|default:user.student_profile.grade_level|default:"Student" }} &bull; Ace Online</div>
+      </div>
+    </div>
+    <div class="mobile-bell-btn" title="Notifications">
+      🔔
+    </div>
+  </div>
+
+  <!-- Cyan Target/Attendance Progress Card -->
+  <div class="mobile-progress-card">
+    <div class="mobile-progress-label">Monthly Target Progress</div>
+    <div class="mobile-progress-val">{{ attendance_pct }}% <span style="font-size: 0.95rem; font-weight: 600; opacity: 0.85;">/ 100% Goal</span></div>
+    <div class="mobile-track">
+      <div class="mobile-track-fill" style="width: {{ attendance_pct }}%;"></div>
+    </div>
+    <div style="font-size: 0.75rem; margin-top: 0.45rem; opacity: 0.92; display: flex; justify-content: space-between;">
+      <span>{{ attended_count }} attended of {{ total_classes_conducted|default:attended_count }} sessions</span>
+      <span>Ace Target</span>
+    </div>
+  </div>
+
+  <!-- 3 Quick Stat Tiles in a Row -->
+  <div class="mobile-tiles-grid">
+    <div class="mobile-tile-card">
+      <div class="mobile-tile-num">{{ enrolled_subjects|length }}</div>
+      <div class="mobile-tile-label">Subjects</div>
+    </div>
+    <div class="mobile-tile-card">
+      <div class="mobile-tile-num" style="color: #34d399;">{{ attended_count }}</div>
+      <div class="mobile-tile-label">Attended</div>
+    </div>
+    <a href="{% url 'classrooms:class_list' %}" class="mobile-tile-add" title="View all live sessions">
+      +
+    </a>
+  </div>
+
+  <!-- Running or Upcoming Class Card with Full-Width Gradient Button -->
+  {% if live_classes_now %}
+    {% for lc in live_classes_now %}
+    <div class="mobile-batch-card running">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+        <span class="signal-red-live" style="padding: 0.15rem 0.55rem; font-size: 0.72rem;">
+          <span class="bullet-red-blink"></span>
+          <span>Running Class</span>
+        </span>
+        <span class="live-timer-badge" data-start="{{ lc.actual_start_time.isoformat }}">{{ lc.duration_minutes }}m</span>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">Started {{ lc.actual_start_time|date:"g:i A" }}</span>
+      </div>
+      <div style="font-size: 1.05rem; font-weight: 800; color: #fff; margin-bottom: 0.2rem;">{{ lc.title }}</div>
+      <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.15rem;">
+        {% if lc.subject %}{{ lc.subject.standard.name }} &bull; {{ lc.subject.name }}{% else %}{{ lc.batch.name }}{% endif %}
+        &bull; {{ lc.teacher.get_full_name|default:lc.teacher.username }}
+      </div>
+      
+      <button 
+        class="btn-mobile-gradient" 
+        onclick="joinClassWithAttendance({{ lc.id }}, '{{ lc.meet_link }}', this)">
+        🎥 Join Live Class
+      </button>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="mobile-batch-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+        <span style="font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 9999px; font-weight: 800; background: rgba(14, 165, 233, 0.15); color: #38bdf8;">
+          Upcoming Class
+        </span>
+        <span style="font-size: 0.72rem; color: var(--text-muted);">Ace Online</span>
+      </div>
+      {% if upcoming_classes %}
+        {% with next_c=upcoming_classes.0 %}
+          <div style="font-size: 1.05rem; font-weight: 800; color: #fff; margin-bottom: 0.2rem;">{{ next_c.title }}</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.15rem;">
+            {% if next_c.subject %}{{ next_c.subject.standard.name }} &bull; {{ next_c.subject.name }}{% else %}{{ next_c.batch.name }}{% endif %}
+            &bull; {{ next_c.teacher.get_full_name|default:next_c.teacher.username }}
+          </div>
+          <div style="font-size: 0.78rem; color: #38bdf8; margin-top: 0.35rem;">{{ next_c.scheduled_start|date:"l, M d &bull; g:i A" }}</div>
+          <a href="{% url 'classrooms:class_detail' next_c.id %}" class="btn-mobile-gradient" style="background: linear-gradient(90deg, #3b82f6, #0ea5e9);">
+            📅 View Class Details
+          </a>
+        {% endwith %}
+      {% else %}
+        <div style="font-size: 0.95rem; font-weight: 700; color: #fff;">No classes scheduled today</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">You are up to date! Check your subject schedules.</div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <!-- Mobile Reminders Section -->
+  <div class="mobile-reminders-section">
+    <div class="mobile-section-header">
+      <span>Reminders</span>
+      <a href="{% url 'classrooms:class_list' %}" style="color: var(--secondary); text-decoration: none; font-size: 0.72rem;">See all</a>
+    </div>
+    {% if upcoming_classes %}
+      <div class="mobile-reminder-card">
+        <span style="font-size: 1.15rem;">🔔</span>
+        <div style="flex: 1;">
+          <div style="font-weight: 700; color: #fff; font-size: 0.84rem;">Upcoming: {{ upcoming_classes.0.title }}</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted);">{{ upcoming_classes.0.scheduled_start|date:"M d, g:i A" }} &bull; Google Meet</div>
+        </div>
+      </div>
+    {% endif %}
+    <div class="mobile-reminder-card">
+      <span style="font-size: 1.15rem;">🎯</span>
+      <div style="flex: 1;">
+        <div style="font-weight: 700; color: #fff; font-size: 0.84rem;">Monthly attendance is {{ attendance_pct }}%</div>
+        <div style="font-size: 0.72rem; color: var(--text-muted);">Target: 80%+ for Ace distinction award</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- MINIMAL LOWER SECTIONS: UPCOMING CLASSES & RECENT RESULTS       -->
+<!-- ============================================================== -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.25rem;">
+
+  <!-- Upcoming Classes Schedule -->
+  <div class="card" style="padding: 1.15rem;">
+    <div class="card-header" style="margin-bottom: 0.85rem; padding-bottom: 0.65rem;">
+      <div class="card-title" style="font-size: 1rem;">
+        <span>📅</span>
+        <span>Upcoming Classes</span>
+      </div>
+      <a href="{% url 'classrooms:class_list' %}" class="btn btn-outline btn-sm" style="font-size: 0.78rem; padding: 0.25rem 0.6rem;">Schedule</a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table" style="font-size: 0.84rem;">
+        <thead>
+          <tr>
+            <th>Class Topic</th>
+            <th>Subject &amp; Class</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for uc in upcoming_classes %}
+          <tr>
+            <td>
+              <a href="{% url 'classrooms:class_detail' uc.id %}" style="color: #fff; font-weight: 600; text-decoration: none;">
+                {{ uc.title }}
+              </a>
+            </td>
+            <td>
+              <span class="badge-scheduled" style="font-size: 0.72rem; padding: 0.2rem 0.5rem;">
+                <span class="bullet-yellow-blink"></span>
+                <span>{% if uc.subject %}{{ uc.subject.standard.name }} - {{ uc.subject.name }}{% else %}{{ uc.batch.name }}{% endif %}</span>
+              </span>
+            </td>
+            <td style="color: var(--text-muted); white-space: nowrap;">{{ uc.scheduled_start|date:"M d, g:i A" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+              No upcoming classes scheduled.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+  </div>
+
+  <!-- Recent Exam Marks -->
+  <div class="card" style="padding: 1.15rem;">
+    <div class="card-header" style="margin-bottom: 0.85rem; padding-bottom: 0.65rem;">
+      <div class="card-title" style="font-size: 1rem;">
+        <span>📊</span>
+        <span>My Exam Scores</span>
+      </div>
+      <a href="{% url 'exams:student_results' %}" class="btn btn-outline btn-sm" style="font-size: 0.78rem; padding: 0.25rem 0.6rem;">All Results</a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table" style="font-size: 0.84rem;">
+        <thead>
+          <tr>
+            <th>Assessment</th>
+            <th>Subject</th>
+            <th style="text-align: center;">Score</th>
+            <th style="text-align: center;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for res in recent_exam_results %}
+          <tr>
+            <td style="font-weight: 600; color: #fff;">{{ res.exam.title }}</td>
+            <td><small style="color: var(--text-muted);">{% if res.exam.subject %}{{ res.exam.subject.standard.name }} &bull; {{ res.exam.subject.name }}{% else %}-{% endif %}</small></td>
+            <td style="text-align: center; white-space: nowrap;">
+              {% if res.is_absent %}
+                <span class="badge-scheduled" style="font-size: 0.72rem;">Absent</span>
+              {% elif res.marks_obtained is not None %}
+                <strong style="color: #38bdf8;">{{ res.marks_obtained }}</strong><small style="color: var(--text-subtle);">/{{ res.exam.total_marks }}</small>
+              {% else %}
+                <span class="badge-completed" style="font-size: 0.72rem;">Pending</span>
+              {% endif %}
+            </td>
+            <td style="text-align: center;">
+              {% if res.is_absent %}
+                <span class="badge-scheduled" style="font-size: 0.72rem;">Absent</span>
+              {% elif res.marks_obtained is not None %}
+                {% if res.is_passed %}
+                  <span class="pulse-badge" style="font-size: 0.72rem; padding: 0.15rem 0.5rem;">Pass ({{ res.percentage }}%)</span>
+                {% else %}
+                  <span style="background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 0.15rem 0.5rem; border-radius: var(--radius-full); font-size: 0.72rem; font-weight: 700;">Fail</span>
+                {% endif %}
+              {% else %}
+                <span style="color: var(--text-subtle);">-</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+              No exam results recorded yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}My Exam Results | Ace Online{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+  <h1 style="font-size: 1.8rem; font-weight: 800; color: #fff;">My Exam Performance & Marks</h1>
+  <p style="color: var(--text-muted); font-size: 0.95rem;">Review your assessment scores, grades, and teacher feedback</p>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Exam</th>
+          <th>Subject</th>
+          <th>Standard / Class</th>
+          <th>Date</th>
+          <th style="text-align: center;">Score</th>
+          <th style="text-align: center;">Percentage</th>
+          <th style="text-align: center;">Result</th>
+          <th>Teacher Remarks</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in results %}
+        <tr>
+          <td style="font-weight: 700; color: #fff;">{{ r.exam.title }}</td>
+          <td>{{ r.exam.subject.name }} ({{ r.exam.subject.code }})</td>
+          <td><span class="role-badge role-TEACHER">{{ r.exam.subject.standard.name|default:"General" }}</span></td>
+          <td>{{ r.exam.exam_date|date:"M d, Y" }}</td>
+          <td style="text-align: center;">
+            {% if r.is_absent %}
+              <span class="badge-scheduled">Absent</span>
+            {% elif r.marks_obtained is not None %}
+              <strong style="font-size: 1.1rem; color: #38bdf8;">{{ r.marks_obtained }}</strong> / {{ r.exam.total_marks }}
+            {% else %}
+              <span class="badge-completed">Not Evaluated</span>
+            {% endif %}
+          </td>
+          <td style="text-align: center; font-weight: 700;">
+            {% if r.is_absent %}
+              0%
+            {% elif r.marks_obtained is not None %}
+              {{ r.percentage }}%
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td style="text-align: center;">
+            {% if r.is_absent %}
+              <span class="badge-scheduled">Absent</span>
+            {% elif r.marks_obtained is not None %}
+              {% if r.is_passed %}
+                <span class="pulse-badge">Passed</span>
+              {% else %}
+                <span style="background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 0.25rem 0.65rem; border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 700;">Failed</span>
+              {% endif %}
+            {% else %}
+              <span class="badge-completed">Pending</span>
+            {% endif %}
+          </td>
+          <td>
+            <span style="color: #cbd5e1; font-style: italic;">
+              {{ r.remarks|default:"No remarks recorded." }}
+            </span>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 3rem;">
+            No exam records available for your enrolled subjects yet.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

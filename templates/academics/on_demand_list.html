@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+
+{% block title %}On-Demand Subject Requests | Ace Online{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+      <span style="font-size: 1.5rem;">📥</span>
+      <h1 style="font-size: 1.8rem; font-weight: 800; color: #fff; margin: 0;">On-Demand Subject Requests</h1>
+    </div>
+    <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">
+      Review custom subjects requested by students during enrollment. Approve them to instantly add to official class curriculum and auto-enroll the student.
+    </p>
+  </div>
+  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+    <a href="{% url 'academics:standard_list' %}" class="btn btn-outline btn-sm">
+      🎓 Standards / Classes
+    </a>
+    <a href="{% url 'academics:subject_list' %}" class="btn btn-outline btn-sm">
+      📚 Official Subjects
+    </a>
+  </div>
+</div>
+
+<!-- Quick Stat Counters -->
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 1.5rem;">
+  <div class="stat-card stat-warning">
+    <div class="stat-label">Pending Review</div>
+    <div class="stat-value">{{ pending_count }}</div>
+  </div>
+  <div class="stat-card stat-success">
+    <div class="stat-label">Approved &amp; Added</div>
+    <div class="stat-value">{{ approved_count }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Student Requests</div>
+    <div class="stat-value">{{ on_demand_requests|length }}</div>
+  </div>
+</div>
+
+<!-- Filters Bar -->
+<div class="card" style="padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
+  <form method="get" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <!-- Status Tabs -->
+    <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+      <a href="?status=all{% if standard_filter %}&standard={{ standard_filter }}{% endif %}" 
+         class="btn btn-sm {% if status_filter == 'all' %}btn-primary{% else %}btn-outline{% endif %}">
+        All
+      </a>
+      <a href="?status=PENDING{% if standard_filter %}&standard={{ standard_filter }}{% endif %}" 
+         class="btn btn-sm {% if status_filter == 'PENDING' %}btn-primary{% else %}btn-outline{% endif %}"
+         style="{% if status_filter == 'PENDING' %}background: #eab308; border-color: #eab308; color: #000;{% endif %}">
+        Pending ({{ pending_count }})
+      </a>
+      <a href="?status=APPROVED{% if standard_filter %}&standard={{ standard_filter }}{% endif %}" 
+         class="btn btn-sm {% if status_filter == 'APPROVED' %}btn-primary{% else %}btn-outline{% endif %}">
+        Approved ({{ approved_count }})
+      </a>
+      <a href="?status=REJECTED{% if standard_filter %}&standard={{ standard_filter }}{% endif %}" 
+         class="btn btn-sm {% if status_filter == 'REJECTED' %}btn-primary{% else %}btn-outline{% endif %}">
+        Rejected
+      </a>
+    </div>
+
+    <!-- Standard Filter Dropdown -->
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Filter by Class:</label>
+      <select name="standard" class="form-select" onchange="this.form.submit()" style="padding: 0.35rem 0.75rem; font-size: 0.85rem; min-width: 170px;">
+        <option value="">All Standards</option>
+        {% for std in standards %}
+          <option value="{{ std.id }}" {% if standard_filter == std.id %}selected{% endif %}>
+            {{ std.name }}
+          </option>
+        {% endfor %}
+      </select>
+      {% if status_filter != 'all' %}
+        <input type="hidden" name="status" value="{{ status_filter }}">
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Requests Table Card -->
+<div class="card" style="padding: 0; overflow: hidden;">
+  <div class="table-responsive">
+    <table class="table" style="margin: 0;">
+      <thead>
+        <tr>
+          <th>Requested Subject</th>
+          <th>Standard / Class</th>
+          <th>Applicant / Student</th>
+          <th>Contact Info</th>
+          <th>Requested On</th>
+          <th>Status</th>
+          <th style="text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for req in on_demand_requests %}
+        <tr>
+          <td>
+            <div style="font-size: 1rem; font-weight: 700; color: #fff;">
+              {{ req.subject_name }}
+            </div>
+            {% if req.admin_notes %}
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">
+                Note: <em>{{ req.admin_notes }}</em>
+              </div>
+            {% endif %}
+          </td>
+          <td>
+            <span class="role-badge role-TEACHER" style="font-size: 0.75rem;">
+              {{ req.standard.name }}
+            </span>
+          </td>
+          <td>
+            <div style="font-weight: 600; color: #e2e8f0;">
+              {% if req.student_name %}
+                {{ req.student_name }}
+              {% elif req.requested_by %}
+                {{ req.requested_by.get_full_name|default:req.requested_by.username }}
+              {% else %}
+                Applicant
+              {% endif %}
+            </div>
+            {% if req.requested_by %}
+              <div style="font-size: 0.75rem; color: var(--text-muted);">
+                <code>@{{ req.requested_by.username }}</code>
+              </div>
+            {% endif %}
+          </td>
+          <td>
+            <span style="font-size: 0.85rem; color: #94a3b8;">
+              {% if req.student_contact %}
+                {{ req.student_contact }}
+              {% elif req.requested_by %}
+                {{ req.requested_by.phone|default:req.requested_by.email|default:"-" }}
+              {% else %}
+                -
+              {% endif %}
+            </span>
+          </td>
+          <td>
+            <span style="font-size: 0.82rem; color: var(--text-muted);">
+              {{ req.created_at|date:"M d, Y" }}
+            </span>
+          </td>
+          <td>
+            {% if req.status == 'PENDING' %}
+              <span class="pulse-badge" style="background: rgba(234, 179, 8, 0.15); color: #fbbf24; border: 1px solid rgba(234, 179, 8, 0.3);">
+                <span class="pulse-dot" style="background: #fbbf24;"></span> Pending Review
+              </span>
+            {% elif req.status == 'APPROVED' %}
+              <span class="badge-completed" style="font-size: 0.75rem;">Approved</span>
+            {% else %}
+              <span style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">
+                Rejected
+              </span>
+            {% endif %}
+          </td>
+          <td style="text-align: right;">
+            {% if req.status == 'PENDING' %}
+              <div style="display: flex; gap: 0.4rem; justify-content: flex-end;">
+                <a href="{% url 'academics:on_demand_approve' req.id %}" class="btn btn-primary btn-sm" style="font-size: 0.78rem; padding: 0.3rem 0.65rem;">
+                  ➕ Approve &amp; Add
+                </a>
+                <button type="button" class="btn btn-outline btn-sm" onclick="openRejectModal('{{ req.id }}', '{{ req.subject_name|escapejs }}')" style="font-size: 0.78rem; padding: 0.3rem 0.55rem; color: #f87171; border-color: rgba(239, 68, 68, 0.3);" title="Reject Request">
+                  ✖
+                </button>
+              </div>
+            {% elif req.status == 'APPROVED' and req.created_subject %}
+              <a href="{% url 'academics:subject_list' %}?standard={{ req.standard.id }}" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.55rem;">
+                View in Roster &rarr;
+              </a>
+            {% else %}
+              <span style="color: var(--text-subtle); font-size: 0.8rem;">-</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+            No on-demand subject requests match your filter criteria.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal: Quick Reject Request -->
+<div id="rejectModal" class="modal-overlay">
+  <div class="modal-content" style="max-width: 440px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h3 style="font-size: 1.2rem; font-weight: 800; color: #fff; margin: 0;">Reject Subject Request</h3>
+      <button onclick="closeModal('rejectModal')" style="background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer;">&times;</button>
+    </div>
+
+    <form method="post" id="rejectForm">
+      {% csrf_token %}
+      <p style="font-size: 0.9rem; color: #cbd5e1; margin-bottom: 1rem;">
+        Are you sure you want to decline the request for <strong id="rejectSubjectName" style="color: #fff;"></strong>?
+      </p>
+
+      <div class="form-group">
+        <label class="form-label">Reason / Admin Note</label>
+        <textarea name="admin_notes" class="form-input" rows="2" placeholder="e.g. Faculty currently unavailable for this subject"></textarea>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.25rem;">
+        <button type="button" class="btn btn-outline" onclick="closeModal('rejectModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary" style="background: #ef4444; border-color: #ef4444;">Confirm Rejection</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openRejectModal(reqId, subjectName) {
+    const form = document.getElementById('rejectForm');
+    form.action = `/academics/on-demand-subjects/${reqId}/reject/`;
+    document.getElementById('rejectSubjectName').textContent = `"${subjectName}"`;
+    openModal('rejectModal');
+  }
+</script>
+{% endblock %}

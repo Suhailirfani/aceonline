@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+
+{% block title %}Live Classes & Schedule | Ace Online{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="font-size: 1.8rem; font-weight: 800; color: #fff;">Live Classes & Schedule</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Interactive online tuition sessions powered by Google Meet</p>
+  </div>
+  {% if user.is_teacher or user.is_admin_user %}
+  <button class="btn btn-primary" onclick="openModal('createClassModal')">
+    ➕ Schedule Live Class
+  </button>
+  {% endif %}
+</div>
+
+<!-- Filter & Calendar Bar -->
+<div class="card" style="margin-bottom: 1.5rem; padding: 1.15rem 1.35rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <!-- Active Date Display & Shortcuts -->
+    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+      <span style="font-size: 1.25rem;">📅</span>
+      <div>
+        <div style="font-size: 1.05rem; font-weight: 800; color: #fff;">
+          {{ selected_date_display }}
+          {% if is_today %}
+            <span class="badge-scheduled" style="font-size: 0.72rem; padding: 0.15rem 0.55rem; margin-left: 0.4rem;">
+              Today
+            </span>
+          {% endif %}
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">
+          Showing {{ classes|length }} session{{ classes|length|pluralize }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Date Picker / Switcher Form -->
+    <form method="get" id="dateFilterForm" style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+      <div style="position: relative; display: flex; align-items: center;">
+        <input 
+          type="date" 
+          name="date" 
+          id="classDatePicker"
+          value="{{ selected_date }}" 
+          class="form-input" 
+          style="padding: 0.45rem 0.85rem; font-size: 0.88rem; width: auto;"
+          onchange="document.getElementById('dateFilterForm').submit()"
+        >
+      </div>
+      <a href="{% url 'classrooms:class_list' %}?date={{ today_str }}" class="btn btn-outline btn-sm" style="{% if is_today %}background: rgba(14, 165, 233, 0.15); border-color: #38bdf8; color: #38bdf8;{% endif %}">
+        Today
+      </a>
+      <a href="{% url 'classrooms:class_list' %}?all=1" class="btn btn-outline btn-sm" style="{% if show_all %}background: rgba(14, 165, 233, 0.15); border-color: #38bdf8; color: #38bdf8;{% endif %}">
+        All Classes
+      </a>
+    </form>
+  </div>
+</div>
+
+<!-- Class Cards List: 5 cards per row on computer, 2 on mobile -->
+<div class="classes-grid-compact">
+  {% for c in classes %}
+  <div class="card class-card-compact" id="class-card-{{ c.id }}" style="border-top: 3px solid {% if c.status == 'LIVE' %}var(--danger){% elif c.status == 'SCHEDULED' %}var(--warning){% else %}var(--text-subtle){% endif %};">
+    <div>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.35rem; margin-bottom: 0.45rem;">
+        <span style="font-size: 0.68rem; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          {{ c.subject.standard.name }}
+        </span>
+        <span id="status-badge-{{ c.id }}">
+          {% if c.status == 'LIVE' %}
+            <span class="signal-red-live" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;">
+              <span class="bullet-red-blink" style="width: 7px; height: 7px;"></span>
+              <span>Live</span>
+              <span class="live-timer-badge" data-start="{{ c.actual_start_time.isoformat }}" style="font-size: 0.68rem; padding: 0.1rem 0.3rem;">{{ c.duration_minutes }}m</span>
+            </span>
+          {% elif c.status == 'COMPLETED' %}
+            <span class="badge-completed" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;">Done</span>
+          {% else %}
+            <span class="badge-scheduled" style="padding: 0.15rem 0.45rem; font-size: 0.68rem;">
+              <span class="bullet-yellow-blink" style="width: 7px; height: 7px;"></span>
+              <span>Wait</span>
+            </span>
+          {% endif %}
+        </span>
+      </div>
+
+      <h2 style="font-size: 0.98rem; font-weight: 800; color: #fff; line-height: 1.25; margin-bottom: 0.5rem; word-break: break-word;">
+        {{ c.subject.name }}
+      </h2>
+
+      <div style="display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.76rem; color: var(--text-muted); margin-bottom: 0.65rem; background: rgba(255,255,255,0.02); padding: 0.5rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.04);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span style="color: #cbd5e1; font-weight: 600;">⏰ Time</span>
+          <span style="color: #fff; font-weight: 800; font-family: 'JetBrains Mono', monospace;">{{ c.scheduled_start|date:"g:i A" }}</span>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span style="color: #cbd5e1; font-weight: 600;">👨‍🏫 Mentor</span>
+          <span style="max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ c.teacher.get_full_name|default:c.teacher.username }}">
+            {{ c.teacher.first_name|default:c.teacher.username }}
+          </span>
+        </div>
+        {% if c.is_recurring %}
+        <div style="color: #a78bfa; font-size: 0.7rem; font-weight: 600; text-align: center; margin-top: 0.15rem;">
+          🔄 Weekly
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div style="border-top: 1px solid var(--border-color); padding-top: 0.55rem; margin-top: 0.35rem; display: flex; flex-direction: column; gap: 0.4rem;">
+      <!-- Student View -->
+      {% if user.is_student %}
+        {% if c.id in attended_class_ids %}
+          <a href="{{ c.meet_link }}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.74rem; padding: 0.35rem; width: 100%; justify-content: center; color: #34d399; border-color: rgba(16, 185, 129, 0.4);">
+            ✅ Re-enter
+          </a>
+        {% elif c.status == 'LIVE' %}
+          <button class="btn btn-meet btn-sm" onclick="joinClassWithAttendance({{ c.id }}, '{{ c.meet_link }}', this)" style="font-size: 0.74rem; padding: 0.4rem; width: 100%; justify-content: center;">
+            🎥 Join Meet
+          </button>
+        {% elif c.status == 'SCHEDULED' %}
+          <button class="btn btn-outline btn-sm" onclick="joinClassWithAttendance({{ c.id }}, '{{ c.meet_link }}', this)" style="font-size: 0.74rem; padding: 0.35rem; width: 100%; justify-content: center;">
+            Enter Link
+          </button>
+        {% else %}
+          <span class="badge-completed" style="font-size: 0.72rem; text-align: center; display: block; padding: 0.25rem;">Ended</span>
+        {% endif %}
+      {% endif %}
+
+      <!-- Teacher / Admin View -->
+      {% if user.is_teacher or user.is_admin_user %}
+        <div style="display: flex; gap: 0.3rem; width: 100%;">
+          {% if user == c.teacher or user.is_admin_user %}
+            {% if c.status == 'SCHEDULED' %}
+              <button class="btn btn-success btn-sm" onclick="startLiveClass({{ c.id }}, this)" style="font-size: 0.72rem; padding: 0.3rem 0.45rem; flex: 1; justify-content: center;">
+                ▶ Start
+              </button>
+            {% elif c.status == 'LIVE' %}
+              <button class="btn btn-danger btn-sm" onclick="endLiveClass({{ c.id }}, this)" style="font-size: 0.72rem; padding: 0.3rem 0.45rem; flex: 1; justify-content: center;">
+                🛑 End
+              </button>
+            {% endif %}
+          {% endif %}
+          <a href="{{ c.meet_link }}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 0.72rem; padding: 0.3rem 0.45rem; flex: 1; justify-content: center;">
+            Meet ↗
+          </a>
+        </div>
+      {% endif %}
+
+      <a href="{% url 'classrooms:class_detail' c.id %}" style="color: var(--text-muted); font-size: 0.72rem; text-align: center; text-decoration: none; padding: 0.15rem 0;">
+        Details ({{ c.attendee_count }}) &rarr;
+      </a>
+    </div>
+  </div>
+  {% empty %}
+  <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 2.5rem; color: var(--text-muted);">
+    <div style="font-size: 2rem; margin-bottom: 0.4rem;">📅</div>
+    <p style="font-size: 1.05rem; font-weight: 700; color: #fff; margin-bottom: 0.25rem;">No classes scheduled for {{ selected_date_display }}.</p>
+    <p style="font-size: 0.82rem; margin-bottom: 1rem;">Select another date from the calendar or view all classes.</p>
+    <a href="{% url 'classrooms:class_list' %}?all=1" class="btn btn-outline btn-sm">View All Scheduled Classes</a>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Modal: Schedule Live Class -->
+{% if form %}
+<div id="createClassModal" class="modal-overlay">
+  <div class="modal-content">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h2 style="font-size: 1.3rem; font-weight: 800; color: #fff;">Schedule Live Class</h2>
+      <button onclick="closeModal('createClassModal')" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Curriculum Subject &amp; Class Level *</label>
+        {{ form.subject }}
+      </div>
+
+      {% if form.teacher %}
+      <div class="form-group">
+        <label class="form-label">Conducting Faculty Teacher</label>
+        {{ form.teacher }}
+        <small style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.25rem; display: block;">
+          Select a teacher or leave blank to auto-assign the subject's default faculty.
+        </small>
+      </div>
+      {% endif %}
+
+
+      <div class="form-group">
+        <label class="form-label">Google Meet Link *</label>
+        {{ form.meet_link }}
+        <small style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.25rem; display: block;">
+          e.g. https://meet.google.com/abc-defg-hij
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Scheduled Date &amp; Time (12-Hour AM/PM) *</label>
+        {{ form.scheduled_start }}
+        <small style="color: var(--text-muted); font-size: 0.78rem; display: block; margin-top: 0.25rem;">
+          Pick date &amp; set class time (supports 12-hour AM/PM format)
+        </small>
+      </div>
+
+      <!-- Recurring Weekly Option -->
+      <div class="form-group" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.85rem;">
+        <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; color: #fff; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.4rem;">
+          {{ form.is_recurring }}
+          <span>🔄 Repeat Weekly (e.g., Every Monday at this time)</span>
+        </label>
+        <div id="repeatWeeksWrapper" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+          <label style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">Repeat for:</label>
+          {{ form.repeat_weeks }}
+          <span style="font-size: 0.82rem; color: var(--text-muted);">weeks</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Description / Topics</label>
+        {{ form.description }}
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <button type="button" class="btn btn-outline" onclick="closeModal('createClassModal')">Cancel</button>
+        <button type="submit" class="btn btn-success">Schedule Class</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

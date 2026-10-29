@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Teacher Registration | Ace Online{% endblock %}
+
+{% block content %}
+<div style="max-width: 650px; margin: 2rem auto;">
+  <div class="card" style="padding: 2.25rem;">
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+      <div class="brand-icon" style="background: linear-gradient(135deg, #0ea5e9, #0284c7);">👨‍🏫</div>
+      <div>
+        <h1 style="font-size: 1.5rem; font-weight: 800;">Teacher Registration</h1>
+        <p style="color: var(--text-muted); font-size: 0.88rem;">Create your teacher portal to schedule classes, conduct live sessions, and track marks</p>
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      
+      {% if form.errors %}
+      <div class="toast toast-error" style="width: 100%; margin-bottom: 1.25rem;">
+        <div>Please correct the errors in the form below.</div>
+      </div>
+      {% endif %}
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">First Name *</label>
+          {{ form.first_name }}
+          {{ form.first_name.errors }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name *</label>
+          {{ form.last_name }}
+          {{ form.last_name.errors }}
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Username *</label>
+          {{ form.username }}
+          {{ form.username.errors }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address *</label>
+          {{ form.email }}
+          {{ form.email.errors }}
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          {{ form.phone }}
+          {{ form.phone.errors }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Highest Qualification *</label>
+          {{ form.qualification }}
+          {{ form.qualification.errors }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Subject Specialization *</label>
+        {{ form.subject_specialization }}
+        {{ form.subject_specialization.errors }}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Professional Bio / Teaching Experience</label>
+        {{ form.bio }}
+        {{ form.bio.errors }}
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          {{ form.password1 }}
+          {{ form.password1.errors }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm Password *</label>
+          {{ form.password2 }}
+          {{ form.password2.errors }}
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; margin-top: 1rem; font-size: 1rem; background: var(--secondary);">
+        Complete Teacher Registration
+      </button>
+
+      <div style="text-align: center; margin-top: 1.5rem; font-size: 0.88rem; color: var(--text-muted);">
+        Already have an account? <a href="{% url 'accounts:login' %}" style="color: var(--secondary);">Log in here</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
