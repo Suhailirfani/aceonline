@@ -43,6 +43,10 @@
             <a href="{% url 'exams:exam_list' %}" class="nav-link">Exams & Marks</a>
           {% endif %}
         </li>
+        <li><a href="{% url 'chat:inbox' %}" class="nav-link">💬 Chat</a></li>
+        {% if user.is_admin_user %}
+        <li><a href="{% url 'chat:admin_management' %}" class="nav-link" style="color: #f59e0b;">🛡️ Chat Supervision</a></li>
+        {% endif %}
       </ul>
     </nav>
 
@@ -93,9 +97,9 @@
       <span class="nav-icon">🏠</span>
       <span>Dashboard</span>
     </a>
-    <a href="{% url 'academics:subject_list' %}" class="mobile-nav-item">
-      <span class="nav-icon">📚</span>
-      <span>Subjects</span>
+    <a href="{% url 'chat:inbox' %}" class="mobile-nav-item">
+      <span class="nav-icon">💬</span>
+      <span>Chat</span>
     </a>
     <a href="{% url 'classrooms:class_list' %}" class="mobile-nav-item">
       <span class="nav-icon">🎥</span>
