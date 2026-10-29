@@ -322,9 +322,15 @@
             </span>
           </td>
           <td>
-            {% if s.is_active %}
-              <span class="badge-completed" style="font-size: 0.72rem;">Active</span>
-            {% else %}
+            <div style="display: flex; align-items: center; gap: 0.4rem;">
+              <a href="{% url 'chat:start_chat' s.id %}" class="btn btn-outline btn-sm" style="padding: 0.15rem 0.45rem; font-size: 0.72rem; border-color: #38bdf8; color: #38bdf8;" title="Chat with Student">💬 Chat</a>
+              {% if s.is_active %}
+                <span class="badge-completed" style="font-size: 0.72rem;">Active</span>
+              {% else %}
+                <span style="background: rgba(239, 68, 68, 0.15); color: #f87171; padding: 0.2rem 0.45rem; border-radius: 4px; font-size: 0.72rem;">Inactive</span>
+              {% endif %}
+            </div>
+            {% if False %}
               <span style="background: rgba(239, 68, 68, 0.15); color: #f87171; padding: 0.2rem 0.45rem; border-radius: 4px; font-size: 0.72rem;">Inactive</span>
             {% endif %}
           </td>

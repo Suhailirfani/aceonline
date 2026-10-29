@@ -9,6 +9,9 @@
     <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">Tuition classes (1st Std - PG), faculty mentors, live sessions, and on-demand subjects</p>
   </div>
   <div>
+    <a href="{% url 'chat:admin_management' %}" class="btn btn-outline btn-sm" style="border-color: #f59e0b; color: #f59e0b; margin-right: 0.4rem;">
+      🛡️ Chat Supervision
+    </a>
     <a href="{% url 'classrooms:class_list' %}" class="btn btn-primary btn-sm">
       🎥 Live Classes
       {% if live_classes_now %}

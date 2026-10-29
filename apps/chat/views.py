@@ -34,6 +34,7 @@ def chat_inbox(request, conversation_id=None):
     active_conversation = None
     active_partner = None
     messages_list = []
+    is_thread_view = bool(conversation_id)
 
     if conversation_id:
         active_conversation = get_object_or_404(Conversation, id=conversation_id)
@@ -61,8 +62,8 @@ def chat_inbox(request, conversation_id=None):
             profile = user.student_profile
             # Prioritize teachers of student's subjects
             sub_teachers = teachers.filter(
-                Q(taught_subjects__in=profile.enrolled_subjects.all()) |
-                Q(taught_subjects__standard=profile.standard)
+                Q(assigned_subjects__in=profile.enrolled_subjects.all()) |
+                Q(assigned_subjects__standard=profile.standard)
             ).distinct()
             if sub_teachers.exists():
                 teachers = sub_teachers
@@ -91,11 +92,11 @@ def chat_inbox(request, conversation_id=None):
     elif user.is_teacher:
         # Teachers can chat with:
         # 1. Students in their taught subjects
-        taught_subjects = user.taught_subjects.all()
+        assigned_subjects = user.assigned_subjects.all()
         students = CustomUser.objects.filter(
             role='STUDENT',
             is_active=True,
-            student_profile__enrolled_subjects__in=taught_subjects
+            student_profile__enrolled_subjects__in=assigned_subjects
         ).distinct()
         
         # If no specific subject enrollment found, allow active students
@@ -152,6 +153,7 @@ def chat_inbox(request, conversation_id=None):
     context = {
         'conversations_data': conversations_data,
         'active_conversation': active_conversation,
+        'is_thread_view': is_thread_view,
         'active_partner': active_partner,
         'messages_list': messages_list,
         'contacts': contacts,
@@ -196,8 +198,8 @@ def start_or_get_conversation(request, user_id):
 
     # Attempt to associate subject if teacher and student
     teacher = current_user if current_user.is_teacher else (target_user if target_user.is_teacher else None)
-    if teacher and teacher.taught_subjects.exists():
-        conversation.subject = teacher.taught_subjects.first()
+    if teacher and teacher.assigned_subjects.exists():
+        conversation.subject = teacher.assigned_subjects.first()
         conversation.save()
 
     return redirect('chat:chat_thread', conversation_id=conversation.id)
@@ -344,3 +346,4 @@ def admin_delete_message(request, message_id):
     msg.delete()
     messages.success(request, "Message deleted successfully by Admin.")
     return redirect(f"/chat/admin-management/?conv_id={conv_id}")
+

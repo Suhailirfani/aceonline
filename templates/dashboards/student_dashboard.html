@@ -12,7 +12,10 @@
       <h1 style="font-size: 1.45rem; font-weight: 800; color: #fff; letter-spacing: -0.3px;">Student Dashboard</h1>
       <p style="color: var(--text-muted); font-size: 0.85rem;">Welcome, {{ user.first_name|default:user.username }} &bull; {{ user.student_profile.grade_level|default:"Grade 10" }} &bull; Ace Online</p>
     </div>
-    <a href="{% url 'classrooms:class_list' %}" class="btn btn-outline btn-sm">Full Schedule &rarr;</a>
+    <div style="display: flex; gap: 0.5rem;">
+      <a href="{% url 'chat:inbox' %}" class="btn btn-outline btn-sm" style="border-color: #38bdf8; color: #38bdf8;">💬 Messages</a>
+      <a href="{% url 'classrooms:class_list' %}" class="btn btn-outline btn-sm">Full Schedule &rarr;</a>
+    </div>
   </div>
 
   <div class="student-top-grid">

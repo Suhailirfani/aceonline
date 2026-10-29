@@ -2,17 +2,30 @@
 {% load static %}
 
 {% block title %}Messages & Chat - Ace Online Tuition{% endblock %}
+{% block body_class %}{% if is_thread_view and active_conversation %}in-chat-active{% endif %}{% endblock %}
+{% block main_class %}chat-page-container{% endblock %}
+{% block footer %}{% endblock %}
 
 {% block content %}
 <style>
+  /* Fixed Full-Height Chat Viewport (No Window Scrollbar) */
+  .chat-page-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0.5rem 1rem 0.5rem 1rem;
+    height: calc(100dvh - 75px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
   .chat-layout {
     display: grid;
     grid-template-columns: 320px 1fr;
-    gap: 1.25rem;
-    height: calc(100vh - 180px);
-    min-height: 550px;
-    margin-top: 1rem;
-    margin-bottom: 2rem;
+    gap: 1rem;
+    height: 100%;
+    min-height: 0; /* Critical: allows children flex/overflow to work without pushing layout */
+    overflow: hidden;
   }
 
   .chat-sidebar {
@@ -21,10 +34,13 @@
     border-radius: var(--radius-md);
     display: flex;
     flex-direction: column;
+    height: 100%;
+    min-height: 0;
     overflow: hidden;
   }
 
   .chat-sidebar-header {
+    flex-shrink: 0;
     padding: 1rem 1.25rem;
     border-bottom: 1px solid var(--border-color);
     display: flex;
@@ -34,7 +50,8 @@
   }
 
   .chat-conv-list {
-    flex: 1;
+    flex: 1 1 0;
+    min-height: 0;
     overflow-y: auto;
     padding: 0.5rem;
     display: flex;
@@ -131,23 +148,28 @@
     margin-left: 0.5rem;
   }
 
-  /* Main Chat Window */
+  /* Main Chat Window with Fixed Input Bar */
   .chat-main {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     display: flex;
     flex-direction: column;
+    height: 100%;
+    min-height: 0; /* Critical for scrollable middle container */
+    position: relative;
     overflow: hidden;
   }
 
   .chat-header {
+    flex-shrink: 0;
     padding: 0.85rem 1.25rem;
     border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: space-between;
     background: rgba(255, 255, 255, 0.02);
+    z-index: 5;
   }
 
   .chat-header-user {
@@ -157,7 +179,8 @@
   }
 
   .chat-messages-container {
-    flex: 1;
+    flex: 1 1 0;
+    min-height: 0; /* Essential: prevents messages from expanding beyond parent */
     padding: 1.25rem;
     overflow-y: auto;
     display: flex;
@@ -221,14 +244,20 @@
     color: rgba(255, 255, 255, 0.7);
   }
 
-  /* Chat Input Area */
+  /* Fixed Bottom Chat Input Bar */
   .chat-input-bar {
+    flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
     padding: 0.85rem 1.25rem;
     border-top: 1px solid var(--border-color);
     background: var(--bg-card);
     display: flex;
     gap: 0.75rem;
     align-items: center;
+    z-index: 10;
   }
 
   .chat-input-bar input {
@@ -236,7 +265,7 @@
     background: var(--bg-input);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-full);
-    padding: 0.7rem 1.25rem;
+    padding: 0.75rem 1.25rem;
     color: var(--text-main);
     font-size: 0.92rem;
     outline: none;
@@ -252,7 +281,7 @@
     color: #fff;
     border: none;
     border-radius: var(--radius-full);
-    padding: 0.7rem 1.4rem;
+    padding: 0.75rem 1.4rem;
     font-weight: 600;
     font-size: 0.9rem;
     cursor: pointer;
@@ -260,6 +289,7 @@
     align-items: center;
     gap: 0.4rem;
     transition: background 0.2s;
+    flex-shrink: 0;
   }
 
   .btn-send:hover {
@@ -360,41 +390,124 @@
     background: rgba(255, 255, 255, 0.06);
   }
 
-  /* Mobile responsiveness */
-  @media (max-width: 768px) {
-    .chat-layout {
-      grid-template-columns: 1fr;
-      height: calc(100vh - 160px);
-    }
-    .chat-sidebar.hide-mobile {
-      display: none;
-    }
-    .chat-main.hide-mobile {
-      display: none;
-    }
-    .back-to-list-btn {
-      display: inline-flex !important;
-    }
-  }
-
   .back-to-list-btn {
     display: none;
     align-items: center;
-    gap: 0.3rem;
-    background: transparent;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.06);
     border: 1px solid var(--border-color);
-    color: var(--text-muted);
-    padding: 0.35rem 0.65rem;
-    border-radius: var(--radius-sm);
-    font-size: 0.8rem;
+    color: var(--text-main);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
     cursor: pointer;
     margin-right: 0.5rem;
+    text-decoration: none;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+  .back-to-list-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+  }
+
+  /* Mobile App-like Layout */
+  @media (max-width: 768px) {
+    .chat-page-container {
+      padding: 0;
+      height: calc(100dvh - 60px);
+    }
+
+    .chat-layout {
+      grid-template-columns: 1fr;
+      height: 100%;
+      gap: 0;
+    }
+
+    .chat-sidebar {
+      border-radius: 0;
+      border: none;
+      height: calc(100dvh - 120px);
+    }
+
+    .chat-sidebar.hide-mobile {
+      display: none;
+    }
+
+    .chat-main {
+      border-radius: 0;
+      border: none;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .chat-main.hide-mobile {
+      display: none;
+    }
+
+    .back-to-list-btn {
+      display: inline-flex !important;
+    }
+
+    /* When in active chat thread on mobile, lock screen to prevent unwanted outer scroll */
+    body.in-chat-active {
+      overflow: hidden !important;
+      position: fixed;
+      width: 100%;
+      height: 100%;
+    }
+
+    body.in-chat-active .mobile-bottom-nav {
+      display: none !important;
+    }
+
+    body.in-chat-active .chat-page-container {
+      padding: 0 !important;
+      margin: 0 !important;
+      height: calc(100dvh - 65px) !important;
+      max-width: 100vw !important;
+      width: 100vw !important;
+    }
+
+    /* Reserve space in messages list so last message is never hidden behind the fixed input bar */
+    .chat-messages-container {
+      padding: 1rem 0.85rem 85px 0.85rem !important;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      flex: 1 1 auto !important;
+    }
+
+    /* Fixed bottom input field permanently docked to bottom of mobile viewport */
+    .chat-input-bar {
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      width: 100% !important;
+      max-width: 100vw !important;
+      box-sizing: border-box !important;
+      padding: 0.65rem 0.85rem calc(0.65rem + env(safe-area-inset-bottom, 0px)) 0.85rem !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+      background: #111827 !important;
+      z-index: 1001 !important;
+      display: flex !important;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    .chat-input-bar input {
+      padding: 0.75rem 1.15rem !important;
+      font-size: 0.95rem !important;
+    }
+
+    .btn-send {
+      padding: 0.75rem 1.3rem !important;
+    }
   }
 </style>
 
 <div class="chat-layout">
   <!-- Sidebar / Conversation List -->
-  <aside class="chat-sidebar {% if active_conversation %}hide-mobile{% endif %}" id="chatSidebar">
+  <aside class="chat-sidebar {% if is_thread_view %}hide-mobile{% endif %}" id="chatSidebar">
     <div class="chat-sidebar-header">
       <div>
         <h2 style="font-size: 1.1rem; font-weight: 700; margin: 0;">Messages</h2>
@@ -453,13 +566,16 @@
   </aside>
 
   <!-- Main Active Chat Pane -->
-  <main class="chat-main {% if not active_conversation %}hide-mobile{% endif %}" id="chatMain">
+  <main class="chat-main {% if not is_thread_view %}hide-mobile{% endif %}" id="chatMain">
     {% if active_conversation %}
       <!-- Chat Header -->
       <div class="chat-header">
         <div class="chat-header-user">
-          <a href="{% url 'chat:inbox' %}" class="back-to-list-btn" title="Back to conversations">
-            ← Back
+          <a href="{% url 'chat:inbox' %}" class="back-to-list-btn" onclick="goToConversationList(event)" title="Back to chats">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
           </a>
           <div class="chat-avatar role-{{ active_partner.badge }}">
             {{ active_partner.initial }}
@@ -484,7 +600,7 @@
         {% endif %}
       </div>
 
-      <!-- Messages Window -->
+      <!-- Messages Window (Scrolls independently while input remains fixed below) -->
       <div class="chat-messages-container" id="messagesContainer">
         {% for msg in messages_list %}
           <div class="message-wrapper {% if msg.sender_id == user.id %}self{% else %}partner{% endif %}" data-msg-id="{{ msg.id }}">
@@ -503,7 +619,7 @@
         {% endfor %}
       </div>
 
-      <!-- Chat Input Form -->
+      <!-- Chat Input Form (Firmly Fixed at Bottom) -->
       <form class="chat-input-bar" id="chatForm" onsubmit="handleSendMessage(event)">
         {% csrf_token %}
         <input type="text" id="chatMessageInput" placeholder="Type your message..." autocomplete="off" required autofocus />
@@ -575,6 +691,42 @@
   const messagesContainer = document.getElementById('messagesContainer');
   const chatInput = document.getElementById('chatMessageInput');
 
+  // If in active conversation thread on mobile, hide bottom nav and dock firmly to bottom
+  {% if is_thread_view and active_conversation %}
+    document.body.classList.add('in-chat-active');
+  {% endif %}
+
+  function goToConversationList(e) {
+    if (window.innerWidth <= 768) {
+      if (e) e.preventDefault();
+      const sidebar = document.getElementById('chatSidebar');
+      const main = document.getElementById('chatMain');
+      if (sidebar && main) {
+        sidebar.classList.remove('hide-mobile');
+        main.classList.add('hide-mobile');
+        document.body.classList.remove('in-chat-active');
+        window.history.pushState({}, '', "{% url 'chat:inbox' %}");
+      } else {
+        window.location.href = "{% url 'chat:inbox' %}";
+      }
+    } else {
+      window.location.href = "{% url 'chat:inbox' %}";
+    }
+  }
+
+  // Handle mobile hardware/browser back gesture
+  window.addEventListener('popstate', function() {
+    if (window.innerWidth <= 768) {
+      const sidebar = document.getElementById('chatSidebar');
+      const main = document.getElementById('chatMain');
+      if (sidebar && main) {
+        sidebar.classList.remove('hide-mobile');
+        main.classList.add('hide-mobile');
+        document.body.classList.remove('in-chat-active');
+      }
+    }
+  });
+
   // Scroll to bottom helper
   function scrollToBottom() {
     if (messagesContainer) {
@@ -641,7 +793,6 @@
 
   // Append new message bubble to UI
   function appendMessage(msg, isSelf) {
-    // Check if already in DOM
     if (document.querySelector(`.message-wrapper[data-msg-id="${msg.id}"]`)) {
       return;
     }

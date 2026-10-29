@@ -12,3 +12,4 @@ urlpatterns = [
     path('admin-management/', views.admin_chat_management, name='admin_management'),
     path('admin/delete-message/<int:message_id>/', views.admin_delete_message, name='admin_delete_message'),
 ]
+

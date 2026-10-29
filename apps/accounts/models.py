@@ -30,6 +30,12 @@ class CustomUser(AbstractUser):
         return self.role == 'STUDENT' and not (self.is_superuser or self.is_staff)
 
     @property
+    def taught_subjects(self):
+        if hasattr(self, 'assigned_subjects'):
+            return self.assigned_subjects.all()
+        return []
+
+    @property
     def is_admin_user(self):
         return self.role == 'ADMIN' or self.is_superuser or self.is_staff
 

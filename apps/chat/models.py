@@ -124,3 +124,4 @@ class ChatMessage(models.Model):
             return "Admin"
         else:
             return self.sender.get_full_name() or self.sender.username
+

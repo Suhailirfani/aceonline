@@ -163,6 +163,9 @@
           <!-- Actions -->
           <td style="text-align: right;">
             <div style="display: inline-flex; gap: 0.4rem;">
+              <a href="{% url 'chat:start_chat' t.id %}" class="btn btn-outline btn-sm" title="Chat with Teacher" style="border-color: #38bdf8; color: #38bdf8;">
+                💬
+              </a>
               <a href="{% url 'accounts:teacher_edit' t.id %}" class="btn btn-outline btn-sm" title="Edit Teacher">
                 ✏️ Edit
               </a>
