@@ -9,77 +9,6 @@
 <link rel="apple-touch-icon" href="{% static 'images/pwa-icon-192.png' %}">
 
 <style>
-  /* PWA "Open in App" Top Notification Banner */
-  .pwa-open-app-banner {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(135deg, #0b0f19, #1e293b);
-    color: #ffffff;
-    border-bottom: 2px solid #0284c7;
-    padding: 0.65rem 1rem;
-    z-index: 10000;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    animation: slideDown 0.35s ease;
-  }
-
-  .pwa-open-app-content {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    min-width: 0;
-  }
-
-  .pwa-open-app-content img {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    flex-shrink: 0;
-  }
-
-  .pwa-open-app-text {
-    font-size: 0.84rem;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .pwa-open-app-btn {
-    background: #0284c7;
-    color: #ffffff;
-    border: none;
-    border-radius: 9999px;
-    padding: 0.4rem 0.95rem;
-    font-size: 0.8rem;
-    font-weight: 700;
-    cursor: pointer;
-    white-space: nowrap;
-    text-decoration: none;
-    transition: background 0.15s;
-    flex-shrink: 0;
-  }
-
-  .pwa-open-app-btn:hover {
-    background: #0369a1;
-  }
-
-  .pwa-close-btn {
-    background: none;
-    border: none;
-    color: #94a3b8;
-    font-size: 1.2rem;
-    line-height: 1;
-    cursor: pointer;
-    padding: 0 0.25rem;
-    flex-shrink: 0;
-  }
-
   /* PWA "Install Mobile App" Popup Bottom Sheet */
   .pwa-install-modal-overlay {
     display: none;
@@ -136,8 +65,8 @@
   }
 
   .pwa-app-icon {
-    width: 58px;
-    height: 58px;
+    width: 56px;
+    height: 56px;
     border-radius: 14px;
     box-shadow: 0 6px 18px rgba(2, 132, 199, 0.35);
     flex-shrink: 0;
@@ -248,30 +177,11 @@
     to { transform: scale(1); opacity: 1; }
   }
 
-  @keyframes slideDown {
-    from { transform: translateY(-100%); }
-    to { transform: translateY(0); }
-  }
-
   @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
   }
 </style>
-
-<!-- Top "Open in App" Banner (Visible if already installed or visited from browser) -->
-<div class="pwa-open-app-banner" id="pwaOpenAppBanner">
-  <div class="pwa-open-app-content">
-    <img src="{% static 'images/pwa-icon-192.png' %}" alt="Ace Online">
-    <div class="pwa-open-app-text">
-      Ace Online App is installed on this device
-    </div>
-  </div>
-  <div style="display: flex; align-items: center; gap: 0.5rem;">
-    <button class="pwa-open-app-btn" onclick="openInstalledApp()">Open in App</button>
-    <button class="pwa-close-btn" onclick="closeOpenAppBanner()" title="Close">&times;</button>
-  </div>
-</div>
 
 <!-- "Install Mobile App" Popup Bottom Sheet / Dialog -->
 <div class="pwa-install-modal-overlay" id="pwaInstallModal" onclick="handlePwaOverlayClick(event)">
@@ -333,27 +243,17 @@
     });
   }
 
-  // 2. Check Display Mode & Installed State
+  // 2. Check Display Mode
   document.addEventListener('DOMContentLoaded', () => {
-    // If ALREADY running inside the standalone app, never prompt to install or open
+    // If ALREADY running inside the standalone app, do not show install prompt
     if (isStandalone) {
       console.log('Running inside standalone PWA mode');
       localStorage.setItem('ace_app_installed', 'true');
       return;
     }
 
-    const wasInstalled = localStorage.getItem('ace_app_installed') === 'true';
     const dismissedUntil = localStorage.getItem('ace_pwa_dismissed_until');
     const isDismissedRecently = dismissedUntil && (Date.now() < parseInt(dismissedUntil, 10));
-
-    // If ALREADY installed but user opened in browser -> Show "Open in App" banner!
-    if (wasInstalled) {
-      const banner = document.getElementById('pwaOpenAppBanner');
-      if (banner) {
-        banner.style.display = 'flex';
-      }
-      return;
-    }
 
     // If on iOS and not dismissed recently, show iOS install guide
     if (isIOS && !isDismissedRecently) {
@@ -395,7 +295,6 @@
   // 4. Trigger Installation
   async function triggerPwaInstall() {
     if (!deferredPrompt) {
-      // If prompt not available (e.g. desktop manual click or unsupported browser), show hint
       if (isIOS) {
         document.getElementById('pwaIosInstructions').style.display = 'block';
       } else {
@@ -420,10 +319,6 @@
     console.log('Ace Online was successfully installed!');
     localStorage.setItem('ace_app_installed', 'true');
     dismissPwaPrompt();
-    const banner = document.getElementById('pwaOpenAppBanner');
-    if (banner) {
-      banner.style.display = 'flex';
-    }
   });
 
   // 6. Dismiss handler
@@ -441,17 +336,4 @@
       dismissPwaPrompt();
     }
   }
-
-  function closeOpenAppBanner() {
-    const banner = document.getElementById('pwaOpenAppBanner');
-    if (banner) {
-      banner.style.display = 'none';
-    }
-  }
-
-  function openInstalledApp() {
-    // Open app via URL redirect or intent
-    window.location.href = window.location.href;
-  }
 </script>
-
