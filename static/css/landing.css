@@ -237,101 +237,97 @@ body.ace-landing {
   font-weight: 600;
 }
 
-/* HERO RIGHT: LIVE INSTITUTION CARD */
-.ace-hero-card {
-  background: #ffffff;
-  border: 1px solid rgba(2, 132, 199, 0.2);
-  border-radius: 24px;
-  padding: 2rem;
-  box-shadow: 0 20px 40px -10px rgba(2, 132, 199, 0.12), 0 0 0 1px rgba(2, 132, 199, 0.05);
-  position: relative;
-}
-
-/* HERO RIGHT: DEMO STUDENT STUDYING WITH DIGITAL GADGET */
-.ace-student-image-container {
-  position: relative;
-  width: 100%;
-  height: 290px;
-  background: radial-gradient(circle at 50% 35%, #e0f2fe 0%, #f0f9ff 60%, #e0f2fe 100%);
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
-  margin-bottom: 1.25rem;
+/* HERO RIGHT: STUDENT STUDYING IMAGE (NO FRAME) */
+.ace-hero-image-col {
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-
-.ace-student-showcase-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center bottom;
-  filter: drop-shadow(0 10px 18px rgba(2, 132, 199, 0.18));
-  transition: transform 0.45s ease;
-  display: block;
-}
-
-.ace-hero-card:hover .ace-student-showcase-img {
-  transform: scale(1.04);
-}
-
-.ace-showcase-live-pill {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  background: rgba(15, 23, 42, 0.82);
-  backdrop-filter: blur(8px);
-  color: #ffffff;
+  justify-content: center;
+  position: relative;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.ace-hero-student-img {
+  width: 100%;
+  max-width: 440px;
+  height: auto;
+  max-height: 520px;
+  object-fit: contain;
+  display: block;
+  /* Pure cutout rendering: NO frame, NO border, soft natural shadow */
+  filter: drop-shadow(0 20px 35px rgba(2, 132, 199, 0.24));
+  transition: transform 0.4s ease;
+}
+
+.ace-hero-student-img:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+
+/* SEPARATED OTHER DETAILS: COURSES & STANDARDS STRIP */
+.ace-hero-details-container {
+  max-width: 1200px;
+  margin: 2.25rem auto 0;
+}
+
+.ace-hero-details-card {
+  background: #ffffff;
+  border: 1px solid rgba(2, 132, 199, 0.18);
+  border-radius: 20px;
+  padding: 1.5rem 1.75rem;
+  box-shadow: 0 12px 30px -10px rgba(2, 132, 199, 0.1);
+}
+
+.ace-details-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.ace-details-card-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--ace-primary);
+  letter-spacing: 0.5px;
+  margin-bottom: 0.2rem;
+}
+
+.ace-details-card-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--ace-text-main);
+  margin: 0;
+}
+
+.ace-batch-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.ace-badge-status-open {
   font-size: 0.74rem;
   font-weight: 800;
-  padding: 0.35rem 0.75rem;
+  color: #0284c7;
+  background: #e0f2fe;
+  padding: 0.25rem 0.6rem;
   border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  z-index: 3;
+  white-space: nowrap;
 }
 
-.ace-floating-stat-badge {
-  position: absolute;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(2, 132, 199, 0.22);
-  border-radius: 14px;
-  padding: 0.45rem 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
-  z-index: 3;
-}
-
-.ace-floating-stat-badge.top-right {
-  top: 12px;
-  right: 12px;
-}
-
-.ace-floating-stat-badge.bottom-left {
-  bottom: 12px;
-  left: 12px;
-  right: 12px;
-}
-
-.ace-floating-stat-badge strong {
-  display: block;
-  font-size: 0.82rem;
-  color: var(--ace-text-main);
-  line-height: 1.15;
+.ace-badge-status-spec {
+  font-size: 0.74rem;
   font-weight: 800;
-}
-
-.ace-floating-stat-badge small {
-  display: block;
-  font-size: 0.7rem;
-  color: var(--ace-text-subtle);
-  font-weight: 600;
+  color: #059669;
+  background: #ecfdf5;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  white-space: nowrap;
 }
 
 .ace-live-banner {
@@ -551,9 +547,35 @@ body.ace-landing {
     padding: 1rem 1rem 2.25rem;
   }
   .ace-hero-container {
-    grid-template-columns: 1fr;
-    gap: 2.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
     text-align: center;
+  }
+  .ace-hero-image-col {
+    order: -1; /* Display at the TOP of hero section on mobile */
+    margin: 0 auto 0.5rem auto;
+    width: 100%;
+  }
+  .ace-hero-student-img {
+    max-width: 270px;
+    max-height: 310px;
+    margin: 0 auto;
+  }
+  .ace-hero-left {
+    order: 1;
+  }
+  .ace-batch-preview-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  .ace-hero-details-card {
+    padding: 1.25rem 1rem;
+    margin-top: 1.25rem;
+  }
+  .ace-details-card-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
   .ace-hero-cta {
     justify-content: center;

@@ -103,86 +103,56 @@
         </div>
       </div>
 
-      <!-- Right Hero Card: Demo Student Studying with Digital Gadget -->
-      <div>
-        <div class="ace-hero-card">
-          <!-- Demo Student Studying with Digital Gadget (Tablet & Stylus) -->
-          <div class="ace-student-image-container">
-            <img 
-              src="{% static 'images/student.png' %}" 
-              alt="Ace Online student studying" 
-              class="ace-student-showcase-img"
-            >
-            
-            <!-- Floating Live Status Overlay Pill -->
-            <div class="ace-showcase-live-pill">
-              <span class="ace-live-pulse"></span>
-              <span>Live Interactive Tuition</span>
-            </div>
+      <!-- Right Hero Column: Student Studying PNG (NO frame) -->
+      <div class="ace-hero-image-col">
+        <img 
+          src="{% static 'images/student.png' %}" 
+          alt="Student Studying with Digital Tablet & Stylus" 
+          class="ace-hero-student-img"
+        >
+      </div>
 
-            <!-- Floating Badge: Top Right Rating -->
-            <div class="ace-floating-stat-badge top-right">
-              <span style="font-size: 1.05rem;">⭐</span>
-              <div>
-                <strong>4.9 / 5</strong>
-                <small>Student Rating</small>
-              </div>
-            </div>
+    </div>
 
-            <!-- Floating Badge: Bottom Left Feature Info -->
-            <div class="ace-floating-stat-badge bottom-left">
-              <span style="font-size: 1.15rem;">📱</span>
-              <div>
-                <strong>Digital Note-Taking &amp; Google Meet</strong>
-                <small>Interactive Tablet Learning &bull; Active Mentors</small>
-              </div>
+    <!-- Separated Other Details: Standards & Course Admissions -->
+    <div class="ace-hero-details-container">
+      <div class="ace-hero-details-card">
+        <div class="ace-details-card-header">
+          <div>
+            <div class="ace-details-card-tag">Academic Admissions Open</div>
+            <h3 class="ace-details-card-title">Standards &amp; Courses (1st Std to PG)</h3>
+          </div>
+          <a href="{% url 'accounts:register_student' %}" class="btn-ace-primary btn-sm" style="font-size: 0.85rem; padding: 0.45rem 1.15rem;">
+            Register &amp; Select Standard &rarr;
+          </a>
+        </div>
+
+        <div class="ace-batch-preview-grid">
+          <div class="ace-batch-item">
+            <div>
+              <div class="ace-batch-title">Higher Secondary (Plus Two)</div>
+              <div class="ace-batch-sub">Physics, Chemistry, Maths &amp; Biology</div>
             </div>
+            <span class="ace-badge-status-open">Admissions Open</span>
           </div>
 
-          <div style="font-size: 0.82rem; font-weight: 800; color: var(--ace-text-subtle); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.85rem;">
-            Standards &amp; Courses (1st Std to PG)
+          <div class="ace-batch-item">
+            <div>
+              <div class="ace-batch-title">High School (8th to 10th Standard)</div>
+              <div class="ace-batch-sub">Core Sciences, Mathematics, English</div>
+            </div>
+            <span class="ace-badge-status-open">Admissions Open</span>
           </div>
 
-          <div class="ace-batch-preview-list">
-            <div class="ace-batch-item">
-              <div>
-                <div class="ace-batch-title">Higher Secondary (Plus Two)</div>
-                <div class="ace-batch-sub">Physics, Chemistry, Maths &amp; Biology</div>
-              </div>
-              <span style="font-size: 0.75rem; font-weight: 800; color: #0284c7; background: #e0f2fe; padding: 0.25rem 0.6rem; border-radius: 9999px;">
-                Admissions Open
-              </span>
+          <div class="ace-batch-item">
+            <div>
+              <div class="ace-batch-title">College &amp; Degree Programs (UG / PG)</div>
+              <div class="ace-batch-sub">B.Com, B.Sc, M.Com &amp; Custom Subjects</div>
             </div>
-
-            <div class="ace-batch-item">
-              <div>
-                <div class="ace-batch-title">High School (8th to 10th Standard)</div>
-                <div class="ace-batch-sub">Core Sciences, Mathematics, English</div>
-              </div>
-              <span style="font-size: 0.75rem; font-weight: 800; color: #0284c7; background: #e0f2fe; padding: 0.25rem 0.6rem; border-radius: 9999px;">
-                Admissions Open
-              </span>
-            </div>
-
-            <div class="ace-batch-item">
-              <div>
-                <div class="ace-batch-title">College &amp; Degree Programs (UG / PG)</div>
-                <div class="ace-batch-sub">B.Com, B.Sc, M.Com &amp; On-Demand Subjects</div>
-              </div>
-              <span style="font-size: 0.75rem; font-weight: 800; color: #059669; background: #ecfdf5; padding: 0.25rem 0.6rem; border-radius: 9999px;">
-                Specialized
-              </span>
-            </div>
-          </div>
-
-          <div style="margin-top: 1.25rem; text-align: center;">
-            <a href="{% url 'accounts:register_student' %}" style="color: var(--ace-primary); font-size: 0.88rem; font-weight: 700; text-decoration: none;">
-              Register &amp; Select Your Standard &rarr;
-            </a>
+            <span class="ace-badge-status-spec">Specialized</span>
           </div>
         </div>
       </div>
-
     </div>
   </section>
 
