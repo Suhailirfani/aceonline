@@ -321,3 +321,26 @@ function updateLiveClassDurations() {
 
 setInterval(updateLiveClassDurations, 1000);
 document.addEventListener('DOMContentLoaded', updateLiveClassDurations);
+
+
+// Mobile Dashboard Navbar Menu Toggle
+function toggleNavMenu() {
+  const hamburger = document.getElementById('navHamburger');
+  const menu = document.getElementById('navLinksMenu');
+  if (hamburger && menu) {
+    hamburger.classList.toggle('is-active');
+    menu.classList.toggle('open');
+  }
+}
+
+// Close mobile navbar dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  const hamburger = document.getElementById('navHamburger');
+  const menu = document.getElementById('navLinksMenu');
+  if (menu && menu.classList.contains('open')) {
+    if (!menu.contains(e.target) && !hamburger.contains(e.target)) {
+      menu.classList.remove('open');
+      if (hamburger) hamburger.classList.remove('is-active');
+    }
+  }
+});

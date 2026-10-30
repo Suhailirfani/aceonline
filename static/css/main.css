@@ -68,6 +68,54 @@ a:visited {
   color: inherit;
 }
 
+
+/* NAVBAR HAMBURGER MENU */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 38px;
+  height: 38px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 10px 8px;
+  cursor: pointer;
+  z-index: 1001;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.nav-hamburger:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.nav-hamburger-bar {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: var(--text-main);
+  border-radius: 2px;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  transform-origin: center;
+}
+
+.nav-hamburger.is-active .nav-hamburger-bar:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.nav-hamburger.is-active .nav-hamburger-bar:nth-child(2) {
+  opacity: 0;
+}
+
+.nav-hamburger.is-active .nav-hamburger-bar:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+.mobile-menu-user-header {
+  display: none;
+}
+
 /* NAVBAR */
 .navbar {
   background: rgba(17, 24, 39, 0.85);
@@ -1142,8 +1190,65 @@ input:-webkit-autofill:active {
     padding-bottom: 76px; /* Offset for fixed bottom navigation bar */
   }
 
+  .nav-hamburger {
+    display: flex !important;
+  }
+
+  .nav-user .desktop-logout-btn {
+    display: none !important;
+  }
+
+  .nav-user .nav-username {
+    display: none !important;
+  }
+
+  .mobile-menu-user-header {
+    display: block !important;
+  }
+
   .navbar .nav-links {
     display: none !important;
+  }
+
+  .navbar .nav-links.open {
+    display: flex !important;
+    flex-direction: column !important;
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    background: rgba(17, 24, 39, 0.98) !important;
+    backdrop-filter: blur(20px) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    padding: 1rem 1.25rem !important;
+    gap: 0.5rem !important;
+    z-index: 1000 !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  .navbar .nav-links.open li {
+    width: 100% !important;
+  }
+
+  .navbar .nav-links.open .nav-link {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding: 0.65rem 0.85rem !important;
+    font-size: 0.92rem !important;
+    font-weight: 600 !important;
+    color: #f8fafc !important;
+    border-radius: var(--radius-sm) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    background: rgba(255, 255, 255, 0.02) !important;
+  }
+
+  .navbar .nav-links.open .nav-link:hover,
+  .navbar .nav-links.open .nav-link.active {
+    background: rgba(79, 70, 229, 0.2) !important;
+    border-color: rgba(79, 70, 229, 0.4) !important;
+    color: #fff !important;
   }
 
   .navbar {
@@ -1392,17 +1497,19 @@ input:-webkit-autofill:active {
   }
 }
 
-/* RESPONSIVE: ADMIN DASHBOARD - 4 STATCARDS IN A ROW ON MOBILE */
+/* RESPONSIVE: DASHBOARD CARDS - 2 CARDS PER ROW ON MOBILE VIEWPORT */
 @media (max-width: 768px) {
+  .stats-grid,
   .admin-stats-grid {
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 0.4rem !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
     margin-bottom: 1.25rem !important;
   }
 
-  .admin-stats-grid .stat-card {
-    padding: 0.65rem 0.25rem !important;
-    border-radius: 10px !important;
+  .admin-stats-grid .stat-card,
+  .stats-grid .stat-card {
+    padding: 0.95rem 0.75rem !important;
+    border-radius: 12px !important;
     text-align: center !important;
     min-width: 0 !important;
     display: flex !important;
@@ -1411,21 +1518,23 @@ input:-webkit-autofill:active {
     align-items: center !important;
   }
 
-  .admin-stats-grid .stat-card::before {
+  .admin-stats-grid .stat-card::before,
+  .stats-grid .stat-card::before {
     top: 0 !important;
     left: 0 !important;
     width: 100% !important;
     height: 3px !important;
   }
 
-  .admin-stats-grid .stat-label {
-    font-size: 0.58rem !important;
+  .admin-stats-grid .stat-label,
+  .stats-grid .stat-label {
+    font-size: 0.72rem !important;
     font-weight: 700 !important;
-    line-height: 1.15 !important;
-    letter-spacing: 0 !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0.3px !important;
     white-space: normal !important;
     word-break: break-word !important;
-    margin-bottom: 0.2rem !important;
+    margin-bottom: 0.25rem !important;
     text-align: center !important;
     display: flex !important;
     flex-direction: column !important;
@@ -1433,23 +1542,26 @@ input:-webkit-autofill:active {
     justify-content: center !important;
   }
 
-  .admin-stats-grid .stat-icon {
-    font-size: 1.2rem !important;
-    margin-bottom: 0.15rem !important;
+  .admin-stats-grid .stat-icon,
+  .stats-grid .stat-icon {
+    font-size: 1.35rem !important;
+    margin-bottom: 0.2rem !important;
     margin-right: 0 !important;
     display: block !important;
     line-height: 1 !important;
   }
 
-  .admin-stats-grid .stat-arrow {
+  .admin-stats-grid .stat-arrow,
+  .stats-grid .stat-arrow {
     display: none !important;
   }
 
-  .admin-stats-grid .stat-value {
-    font-size: 1.2rem !important;
+  .admin-stats-grid .stat-value,
+  .stats-grid .stat-value {
+    font-size: 1.45rem !important;
     font-weight: 800 !important;
     margin-top: 0 !important;
-    line-height: 1.1 !important;
+    line-height: 1.15 !important;
     text-align: center !important;
   }
 
@@ -1460,21 +1572,27 @@ input:-webkit-autofill:active {
 }
 
 @media (max-width: 480px) {
+  .stats-grid,
   .admin-stats-grid {
-    gap: 0.25rem !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.55rem !important;
   }
-  .admin-stats-grid .stat-card {
-    padding: 0.5rem 0.15rem !important;
-    border-radius: 8px !important;
+  .admin-stats-grid .stat-card,
+  .stats-grid .stat-card {
+    padding: 0.8rem 0.5rem !important;
+    border-radius: 10px !important;
   }
-  .admin-stats-grid .stat-label {
-    font-size: 0.52rem !important;
+  .admin-stats-grid .stat-label,
+  .stats-grid .stat-label {
+    font-size: 0.68rem !important;
   }
-  .admin-stats-grid .stat-icon {
-    font-size: 1.05rem !important;
+  .admin-stats-grid .stat-icon,
+  .stats-grid .stat-icon {
+    font-size: 1.25rem !important;
   }
-  .admin-stats-grid .stat-value {
-    font-size: 1.05rem !important;
+  .admin-stats-grid .stat-value,
+  .stats-grid .stat-value {
+    font-size: 1.3rem !important;
   }
 }
 

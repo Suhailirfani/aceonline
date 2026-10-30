@@ -20,7 +20,22 @@
 
     {% if user.is_authenticated %}
     <nav>
-      <ul class="nav-links">
+      <ul class="nav-links" id="navLinksMenu">
+        <li class="mobile-menu-user-header">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 0.65rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+            <div>
+              <span class="role-badge role-{{ user.role }}" style="font-size: 0.7rem; padding: 2px 7px;">
+                {{ user.get_role_display }}
+              </span>
+              <div style="font-size: 0.95rem; font-weight: 700; color: #fff; margin-top: 0.2rem;">
+                {{ user.get_full_name|default:user.username }}
+              </div>
+            </div>
+            <a href="{% url 'accounts:logout' %}" class="btn btn-outline btn-sm" style="color: #f87171; border-color: rgba(239, 68, 68, 0.4); padding: 0.25rem 0.65rem; font-size: 0.8rem;">
+              Logout
+            </a>
+          </div>
+        </li>
         <li>
           {% if user.is_admin_user %}
             <a href="{% url 'dashboards:admin_dashboard' %}" class="nav-link">Dashboard</a>
@@ -41,7 +56,7 @@
           {% if user.is_student %}
             <a href="{% url 'exams:student_results' %}" class="nav-link">My Results</a>
           {% else %}
-            <a href="{% url 'exams:exam_list' %}" class="nav-link">Exams & Marks</a>
+            <a href="{% url 'exams:exam_list' %}" class="nav-link">Exams &amp; Marks</a>
           {% endif %}
         </li>
         <li><a href="{% url 'chat:inbox' %}" class="nav-link">💬 Chat</a></li>
@@ -51,14 +66,23 @@
       </ul>
     </nav>
 
-    <div class="nav-user">
-      <span class="role-badge role-{{ user.role }}">
-        {{ user.get_role_display }}
-      </span>
-      <span style="font-size: 0.9rem; font-weight: 600;">
-        {{ user.get_full_name|default:user.username }}
-      </span>
-      <a href="{% url 'accounts:logout' %}" class="btn btn-outline btn-sm">Logout</a>
+    <div class="nav-right-container" style="display: flex; align-items: center; gap: 0.75rem;">
+      <div class="nav-user">
+        <span class="role-badge role-{{ user.role }}">
+          {{ user.get_role_display }}
+        </span>
+        <span class="nav-username" style="font-size: 0.9rem; font-weight: 600;">
+          {{ user.get_full_name|default:user.username }}
+        </span>
+        <a href="{% url 'accounts:logout' %}" class="btn btn-outline btn-sm desktop-logout-btn">Logout</a>
+      </div>
+
+      <!-- Mobile Hamburger Button for Dashboard Nav Items -->
+      <button class="nav-hamburger" id="navHamburger" aria-label="Toggle navigation menu" type="button" onclick="toggleNavMenu()">
+        <span class="nav-hamburger-bar"></span>
+        <span class="nav-hamburger-bar"></span>
+        <span class="nav-hamburger-bar"></span>
+      </button>
     </div>
     {% else %}
     <div class="nav-user">
@@ -119,7 +143,7 @@
     {% endif %}
     <a href="{% url 'accounts:logout' %}" class="mobile-nav-item">
       <span class="nav-icon">🚪</span>
-      <span>Exit</span>
+      <span>Logout</span>
     </a>
   </nav>
   {% endif %}
