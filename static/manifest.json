@@ -1,0 +1,50 @@
+{
+  "name": "Ace Online Tuition",
+  "short_name": "Ace Online",
+  "description": "Premier Online Tuition Institution for 1st Standard to Postgraduate students with live Google Meet classes, exam analytics, and mentor support.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b0f19",
+  "theme_color": "#0284c7",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/static/images/pwa-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/images/pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/images/pwa-icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Live Classes",
+      "url": "/classes/",
+      "icons": [{ "src": "/static/images/pwa-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Messages & Chat",
+      "url": "/chat/",
+      "icons": [{ "src": "/static/images/pwa-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "My Dashboard",
+      "url": "/dashboard-redirect/",
+      "icons": [{ "src": "/static/images/pwa-icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
+

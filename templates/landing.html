@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ace Online | Premier Online Tuition Institution</title>
   <link rel="stylesheet" href="{% static 'css/landing.css' %}?v={% now 'U' %}">
+  {% include 'includes/pwa_install_prompt.html' %}
 </head>
 <body class="ace-landing">
 
@@ -21,6 +22,11 @@
       <li><a href="#features" class="ace-nav-link">Why Ace Online</a></li>
       <li><a href="{% url 'classrooms:class_list' %}" class="ace-nav-link">Live Sessions</a></li>
       <li><a href="{% url 'accounts:register_student' %}" class="ace-nav-link">Enroll Online</a></li>
+      <li>
+        <button type="button" onclick="triggerPwaInstall()" class="ace-nav-link" style="background:none; border:none; color: #0284c7; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; padding: 0.6rem 0;">
+          📲 Install Mobile App
+        </button>
+      </li>
       <li class="ace-mobile-auth">
         {% if user.is_authenticated %}
           <a href="{% url 'dashboard_redirect' %}" class="btn-ace-primary" style="justify-content: center;">

@@ -1,0 +1,457 @@
+{% load static %}
+<!-- PWA Web App Manifest & Meta Tags -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0284c7">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ace Online">
+<link rel="apple-touch-icon" href="{% static 'images/pwa-icon-192.png' %}">
+
+<style>
+  /* PWA "Open in App" Top Notification Banner */
+  .pwa-open-app-banner {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #0b0f19, #1e293b);
+    color: #ffffff;
+    border-bottom: 2px solid #0284c7;
+    padding: 0.65rem 1rem;
+    z-index: 10000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    animation: slideDown 0.35s ease;
+  }
+
+  .pwa-open-app-content {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+  }
+
+  .pwa-open-app-content img {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+
+  .pwa-open-app-text {
+    font-size: 0.84rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .pwa-open-app-btn {
+    background: #0284c7;
+    color: #ffffff;
+    border: none;
+    border-radius: 9999px;
+    padding: 0.4rem 0.95rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+
+  .pwa-open-app-btn:hover {
+    background: #0369a1;
+  }
+
+  .pwa-close-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 0.25rem;
+    flex-shrink: 0;
+  }
+
+  /* PWA "Install Mobile App" Popup Bottom Sheet */
+  .pwa-install-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(5px);
+    z-index: 99999;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .pwa-install-modal-overlay.active {
+    display: flex;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .pwa-install-card {
+    background: #111827;
+    border-top: 1px solid rgba(2, 132, 199, 0.35);
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px 24px 0 0;
+    width: 100%;
+    max-width: 520px;
+    padding: 1.5rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
+    color: #ffffff;
+    position: relative;
+    animation: slideUpSheet 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @media (min-width: 600px) {
+    .pwa-install-modal-overlay {
+      align-items: center;
+      padding: 1rem;
+    }
+    .pwa-install-card {
+      border-radius: 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      animation: scaleUpModal 0.25s ease;
+    }
+  }
+
+  .pwa-install-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .pwa-app-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(2, 132, 199, 0.35);
+    flex-shrink: 0;
+  }
+
+  .pwa-install-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 0.2rem 0;
+    letter-spacing: -0.3px;
+  }
+
+  .pwa-install-sub {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin: 0;
+    line-height: 1.35;
+  }
+
+  .pwa-feature-bullets {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 0.75rem 1rem;
+  }
+
+  .pwa-bullet-item {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.82rem;
+    color: #cbd5e1;
+  }
+
+  .pwa-bullet-item span {
+    font-size: 1rem;
+  }
+
+  .pwa-install-actions {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .btn-pwa-install {
+    flex: 2;
+    background: linear-gradient(135deg, #0284c7, #0ea5e9);
+    color: #ffffff;
+    border: none;
+    border-radius: 9999px;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.92rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .btn-pwa-install:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(2, 132, 199, 0.55);
+  }
+
+  .btn-pwa-dismiss {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    border-radius: 9999px;
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn-pwa-dismiss:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .pwa-ios-instructions {
+    display: none;
+    background: rgba(2, 132, 199, 0.12);
+    border: 1px solid rgba(2, 132, 199, 0.3);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 0.82rem;
+    color: #e0f2fe;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+  }
+
+  @keyframes slideUpSheet {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  @keyframes scaleUpModal {
+    from { transform: scale(0.92); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes slideDown {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+</style>
+
+<!-- Top "Open in App" Banner (Visible if already installed or visited from browser) -->
+<div class="pwa-open-app-banner" id="pwaOpenAppBanner">
+  <div class="pwa-open-app-content">
+    <img src="{% static 'images/pwa-icon-192.png' %}" alt="Ace Online">
+    <div class="pwa-open-app-text">
+      Ace Online App is installed on this device
+    </div>
+  </div>
+  <div style="display: flex; align-items: center; gap: 0.5rem;">
+    <button class="pwa-open-app-btn" onclick="openInstalledApp()">Open in App</button>
+    <button class="pwa-close-btn" onclick="closeOpenAppBanner()" title="Close">&times;</button>
+  </div>
+</div>
+
+<!-- "Install Mobile App" Popup Bottom Sheet / Dialog -->
+<div class="pwa-install-modal-overlay" id="pwaInstallModal" onclick="handlePwaOverlayClick(event)">
+  <div class="pwa-install-card">
+    <div class="pwa-install-header">
+      <img src="{% static 'images/pwa-icon-192.png' %}" alt="Ace Online Tuition Logo" class="pwa-app-icon">
+      <div>
+        <h3 class="pwa-install-title">Install Ace Online App</h3>
+        <p class="pwa-install-sub">Online Tuition Institution &bull; 1st Std to PG</p>
+      </div>
+    </div>
+
+    <!-- Features Overview -->
+    <div class="pwa-feature-bullets">
+      <div class="pwa-bullet-item">
+        <span>⚡</span>
+        <span>Instant 1-tap access to Live Classes &amp; Google Meet</span>
+      </div>
+      <div class="pwa-bullet-item">
+        <span>💬</span>
+        <span>Real-time Chat with Teachers &amp; Administration</span>
+      </div>
+      <div class="pwa-bullet-item">
+        <span>📱</span>
+        <span>Lightweight, fast, no App Store downloads required</span>
+      </div>
+    </div>
+
+    <!-- iOS Safari Instructions (shown only on iOS) -->
+    <div class="pwa-ios-instructions" id="pwaIosInstructions">
+      📲 <strong>To install on iPhone/iPad:</strong><br>
+      1. Tap the <strong>Share</strong> button (<strong>⎋</strong> or square with arrow up) at the bottom.<br>
+      2. Scroll and select <strong>"Add to Home Screen" ⊞</strong>.
+    </div>
+
+    <div class="pwa-install-actions">
+      <button class="btn-pwa-install" id="btnPwaInstall" onclick="triggerPwaInstall()">
+        <span>📲</span>
+        <span id="btnInstallText">Install Mobile App</span>
+      </button>
+      <button class="btn-pwa-dismiss" onclick="dismissPwaPrompt()">
+        Maybe Later
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let deferredPrompt = null;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+  // 1. Register Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .then((reg) => console.log('PWA ServiceWorker registered with scope:', reg.scope))
+        .catch((err) => console.log('PWA ServiceWorker registration failed:', err));
+    });
+  }
+
+  // 2. Check Display Mode & Installed State
+  document.addEventListener('DOMContentLoaded', () => {
+    // If ALREADY running inside the standalone app, never prompt to install or open
+    if (isStandalone) {
+      console.log('Running inside standalone PWA mode');
+      localStorage.setItem('ace_app_installed', 'true');
+      return;
+    }
+
+    const wasInstalled = localStorage.getItem('ace_app_installed') === 'true';
+    const dismissedUntil = localStorage.getItem('ace_pwa_dismissed_until');
+    const isDismissedRecently = dismissedUntil && (Date.now() < parseInt(dismissedUntil, 10));
+
+    // If ALREADY installed but user opened in browser -> Show "Open in App" banner!
+    if (wasInstalled) {
+      const banner = document.getElementById('pwaOpenAppBanner');
+      if (banner) {
+        banner.style.display = 'flex';
+      }
+      return;
+    }
+
+    // If on iOS and not dismissed recently, show iOS install guide
+    if (isIOS && !isDismissedRecently) {
+      setTimeout(() => {
+        const iosBox = document.getElementById('pwaIosInstructions');
+        const modal = document.getElementById('pwaInstallModal');
+        const installBtn = document.getElementById('btnPwaInstall');
+        if (iosBox && modal) {
+          iosBox.style.display = 'block';
+          if (installBtn) installBtn.style.display = 'none';
+          modal.classList.add('active');
+        }
+      }, 1800);
+    }
+  });
+
+  // 3. Catch Android / Desktop Chrome 'beforeinstallprompt'
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+
+    // Check if dismissed recently
+    const dismissedUntil = localStorage.getItem('ace_pwa_dismissed_until');
+    if (dismissedUntil && Date.now() < parseInt(dismissedUntil, 10)) {
+      return;
+    }
+
+    // Show the Install Mobile App Popup after 1.5 seconds
+    setTimeout(() => {
+      if (!isStandalone) {
+        const modal = document.getElementById('pwaInstallModal');
+        if (modal) {
+          modal.classList.add('active');
+        }
+      }
+    }, 1500);
+  });
+
+  // 4. Trigger Installation
+  async function triggerPwaInstall() {
+    if (!deferredPrompt) {
+      // If prompt not available (e.g. desktop manual click or unsupported browser), show hint
+      if (isIOS) {
+        document.getElementById('pwaIosInstructions').style.display = 'block';
+      } else {
+        alert("To install, tap your browser's menu (⋮) and select 'Install app' or 'Add to Home screen'.");
+      }
+      return;
+    }
+
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log('User response to install prompt:', outcome);
+
+    if (outcome === 'accepted') {
+      localStorage.setItem('ace_app_installed', 'true');
+    }
+    deferredPrompt = null;
+    dismissPwaPrompt();
+  }
+
+  // 5. Detect Successful Installation
+  window.addEventListener('appinstalled', (evt) => {
+    console.log('Ace Online was successfully installed!');
+    localStorage.setItem('ace_app_installed', 'true');
+    dismissPwaPrompt();
+    const banner = document.getElementById('pwaOpenAppBanner');
+    if (banner) {
+      banner.style.display = 'flex';
+    }
+  });
+
+  // 6. Dismiss handler
+  function dismissPwaPrompt() {
+    const modal = document.getElementById('pwaInstallModal');
+    if (modal) {
+      modal.classList.remove('active');
+    }
+    // Remember dismissal for 18 hours
+    localStorage.setItem('ace_pwa_dismissed_until', (Date.now() + 18 * 60 * 60 * 1000).toString());
+  }
+
+  function handlePwaOverlayClick(e) {
+    if (e.target.id === 'pwaInstallModal') {
+      dismissPwaPrompt();
+    }
+  }
+
+  function closeOpenAppBanner() {
+    const banner = document.getElementById('pwaOpenAppBanner');
+    if (banner) {
+      banner.style.display = 'none';
+    }
+  }
+
+  function openInstalledApp() {
+    // Open app via URL redirect or intent
+    window.location.href = window.location.href;
+  }
+</script>
+

@@ -7,6 +7,7 @@
   <title>{% block title %}Ace Online | Tuition Platform{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/main.css' %}?v={% now 'U' %}">
   {% block extra_head %}{% endblock %}
+  {% include 'includes/pwa_install_prompt.html' %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
 
