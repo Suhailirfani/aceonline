@@ -1,4 +1,18 @@
 {% load static %}
+<!-- Mobile App Opening Splash Screen (Ace Logo in Rounded Box) -->
+<div id="mobileAppSplash" class="mobile-app-splash" aria-hidden="true">
+  <div class="splash-inner">
+    <div class="splash-logo-card">
+      <img src="{% static 'images/acewhitebg.png' %}" alt="Ace Online Logo" class="splash-logo-media">
+    </div>
+    <h2 class="splash-brand-title">Ace Online</h2>
+    <p class="splash-brand-tag">Online Tuition Platform</p>
+    <div class="splash-loading-bar">
+      <div class="splash-loading-pill"></div>
+    </div>
+  </div>
+</div>
+
 <!-- PWA Web App Manifest & Meta Tags -->
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#0284c7">
@@ -6,7 +20,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Ace Online">
-<link rel="apple-touch-icon" href="{% static 'images/pwa-icon-192.png' %}">
+<link rel="icon" type="image/png" href="{% static 'images/ace.png' %}">
+<link rel="apple-touch-icon" href="{% static 'images/acewhitebg.png' %}">
 
 <style>
   /* PWA "Install Mobile App" Popup Bottom Sheet */
@@ -181,13 +196,135 @@
     from { opacity: 0; }
     to { opacity: 1; }
   }
+
+  /* MOBILE APP OPENING SPLASH SCREEN */
+  .mobile-app-splash {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background: radial-gradient(circle at 50% 35%, #0f172a 0%, #0b0f19 100%);
+    z-index: 999999;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Show on mobile viewports & PWA standalone app launches */
+  @media (max-width: 768px) {
+    .mobile-app-splash.is-opening {
+      display: flex !important;
+    }
+  }
+
+  @media all and (display-mode: standalone) {
+    .mobile-app-splash.is-opening {
+      display: flex !important;
+    }
+  }
+
+  .splash-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    animation: splashContentFadeIn 0.4s ease-out;
+  }
+
+  /* Rounded Box for Ace Logo */
+  .splash-logo-card {
+    width: 110px;
+    height: 110px;
+    background: #ffffff;
+    border-radius: 24px;
+    overflow: hidden;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 16px 40px -4px rgba(2, 132, 199, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.18);
+    border: 2px solid rgba(2, 132, 199, 0.4);
+    animation: splashBoxPop 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+
+  .splash-logo-media {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  .splash-brand-title {
+    margin-top: 1.25rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+    margin-bottom: 0.15rem;
+    font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  }
+
+  .splash-brand-tag {
+    font-size: 0.82rem;
+    color: #94a3b8;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .splash-loading-bar {
+    margin-top: 1.75rem;
+    width: 130px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 9999px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .splash-loading-pill {
+    width: 45%;
+    height: 100%;
+    background: linear-gradient(90deg, #0284c7, #38bdf8);
+    border-radius: 9999px;
+    position: absolute;
+    animation: splashSlide 1.1s infinite ease-in-out;
+  }
+
+  @keyframes splashBoxPop {
+    0% { transform: scale(0.6); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes splashContentFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes splashSlide {
+    0% { left: -45%; }
+    100% { left: 100%; }
+  }
+
+  .mobile-app-splash.fade-exit {
+    opacity: 0;
+    transform: scale(1.03);
+    transition: opacity 0.45s ease-out, transform 0.45s ease-out;
+    pointer-events: none;
+  }
+
 </style>
 
 <!-- "Install Mobile App" Popup Bottom Sheet / Dialog -->
 <div class="pwa-install-modal-overlay" id="pwaInstallModal" onclick="handlePwaOverlayClick(event)">
   <div class="pwa-install-card">
     <div class="pwa-install-header">
-      <img src="{% static 'images/pwa-icon-192.png' %}" alt="Ace Online Tuition Logo" class="pwa-app-icon">
+      <img src="{% static 'images/acewhitebg.png' %}" alt="Ace Online Tuition Logo" class="pwa-app-icon">
       <div>
         <h3 class="pwa-install-title">Install Ace Online App</h3>
         <p class="pwa-install-sub">Online Tuition Institution &bull; 1st Std to PG</p>
@@ -336,4 +473,30 @@
       dismissPwaPrompt();
     }
   }
+
+  // Mobile App Opening Splash Screen Controller
+  (function initMobileAppSplash() {
+    const splash = document.getElementById('mobileAppSplash');
+    if (!splash) return;
+
+    const isMobile = window.innerWidth <= 768 || window.matchMedia('(display-mode: standalone)').matches;
+    if (!isMobile) return;
+
+    // Show splash on fresh app open/session launch
+    const splashSeen = sessionStorage.getItem('ace_splash_played');
+    if (!splashSeen) {
+      splash.classList.add('is-opening');
+      sessionStorage.setItem('ace_splash_played', 'true');
+
+      // Gracefully exit after 1.25 seconds
+      setTimeout(() => {
+        splash.classList.add('fade-exit');
+        setTimeout(() => {
+          splash.classList.remove('is-opening', 'fade-exit');
+          splash.style.display = 'none';
+        }, 450);
+      }, 1250);
+    }
+  })();
+
 </script>

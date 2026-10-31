@@ -13,7 +13,9 @@
   <!-- Top Navigation Bar -->
   <header class="ace-nav">
     <a href="{% url 'home' %}" class="ace-logo">
-      <div class="ace-logo-badge">⚡</div>
+      <div class="ace-logo-badge">
+        <img src="{% static 'images/ace.png' %}" alt="Ace Online Logo" class="ace-logo-img">
+      </div>
       <span>Ace Online</span>
     </a>
 
@@ -281,7 +283,9 @@
   <footer class="ace-footer">
     <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 1.5rem;">
       <div style="display: flex; align-items: center; gap: 0.5rem;">
-        <div class="ace-logo-badge" style="width: 32px; height: 32px; font-size: 1rem;">⚡</div>
+        <div class="ace-logo-badge" style="width: 32px; height: 32px; padding: 2px;">
+          <img src="{% static 'images/ace.png' %}" alt="Ace Online Logo" style="width: 100%; height: 100%; object-fit: contain;">
+        </div>
         <strong style="font-size: 1.15rem; color: var(--ace-text-main);">Ace Online</strong>
       </div>
       <div style="display: flex; gap: 1.5rem; font-size: 0.88rem;">

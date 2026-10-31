@@ -14,7 +14,9 @@
   <!-- Navigation Bar -->
   <header class="navbar">
     <a href="{% url 'home' %}" class="nav-brand">
-      <div class="brand-icon">⚡</div>
+      <div class="brand-icon">
+        <img src="{% static 'images/ace.png' %}" alt="Ace Online Logo" class="brand-logo-img">
+      </div>
       <span>Ace Online</span>
     </a>
 
@@ -111,6 +113,10 @@
 
   {% block footer %}
   <footer class="footer">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+      <img src="{% static 'images/ace.png' %}" alt="Ace Online Logo" style="width: 22px; height: 22px; object-fit: contain;">
+      <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">Ace Online Tuition</span>
+    </div>
     <p>&copy; 2026 Ace Online Tuition Institution. All rights reserved.</p>
   </footer>
   {% endblock %}

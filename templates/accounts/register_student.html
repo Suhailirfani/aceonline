@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Student Registration &amp; Subject Selection | Ace Online{% endblock %}
 
@@ -194,7 +195,9 @@
 
   <div class="card" style="padding: 2.25rem;">
     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
-      <div class="brand-icon" style="background: linear-gradient(135deg, #10b981, #059669);">🎒</div>
+      <div class="brand-icon" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); padding: 4px;">
+        <img src="{% static 'images/ace.png' %}" alt="Ace Online Logo" style="width: 100%; height: 100%; object-fit: contain;">
+      </div>
       <div>
         <h1 style="font-size: 1.5rem; font-weight: 800; color: #fff; margin: 0 0 0.25rem 0;">Student Registration</h1>
         <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">Enroll for specialized online tuition from 1st Standard up to Postgraduate</p>
